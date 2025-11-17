@@ -17,7 +17,7 @@ html,body{
   display:flex;
   align-items:flex-start;
   justify-content:center;
-  padding:24px 0;
+  padding: 0;
   font-family:'Rasa';
 }
 
@@ -124,7 +124,13 @@ header.appbar {
   margin-top: -50px; /* tarikan kecil, jangan terlalu besar; sesuaikan -4px sampai -18px */
 }
 
-h2.section{margin:6px 0 8px;font-size:24px;color:var(--text);font-weight:505;font-family:'Rasa';}
+h2.section{margin:-20px 0 8px;font-size:15px;color:var(--text);font-weight:505;font-family:'Rasa';}
+#discover-title {
+  margin-top: 15px;
+}
+
+
+
 
 /* brands */
 .brands-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;}
@@ -152,8 +158,8 @@ h2.section{margin:6px 0 8px;font-size:24px;color:var(--text);font-weight:505;fon
 
 .brand-item{
   flex:0 0 auto;
-  min-width:70px;
-  height:73px;
+  width:160px;
+  height:195px;
   padding:6px;
   border-radius:10px;
   background:var(--card);
@@ -166,11 +172,21 @@ h2.section{margin:6px 0 8px;font-size:24px;color:var(--text);font-weight:505;fon
   cursor:pointer;
 }
 
-.brand-item img{
-  max-width: 90%;
-  max-height: 90%;
-  object-fit:contain;
+.brand-item {
+  display: flex;
+  flex-direction: column;  /* ⬅️ ini bikin gambar di atas, tulisan di bawah */
+  align-items: center;
+  justify-content: center;
 }
+
+.brand-label {
+  margin-top: 50px;
+  font-size: 15px;
+  color: var(--text);
+  font-weight: 500;
+  text-align: center;
+}
+
 
 /* hover */
 .brand-item:hover{
@@ -179,13 +195,10 @@ h2.section{margin:6px 0 8px;font-size:24px;color:var(--text);font-weight:505;fon
 }
 
 
-/* logo di dalam brand-item */
 .brand-item img {
-  max-width: 90%;
-  max-height: 90%;
+  width: 50%;   /* gambar lebih kecil */
+  height: auto;
   object-fit: contain;
-  opacity: 0.95;
-  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
 /* saat hover, logo ikut membesar halus */
@@ -194,7 +207,16 @@ h2.section{margin:6px 0 8px;font-size:24px;color:var(--text);font-weight:505;fon
   opacity: 1;
 }
 
+.brands-wrap a.brand-item {
+  text-decoration: none;
+  color: inherit;   /* biar tulisan tetep warna normal */
+}
 
+
+.brand-item:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 0 18px rgba(66, 203, 173, 0.315); /* glow lembut */
+}
 
 /* ---------- DISCOVER: gaya card seperti like-card ---------- */
 .discover-row{

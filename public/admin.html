@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Booths</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <div class="wrap">
+    <h1>Admin — Booth Manager</h1>
+    <p class="lead">Edit 4 booth entries. Data tersimpan ke localStorage.</p>
+
+    <div class="controls">
+      <button id="btn-save">Save</button>
+      <button id="btn-load" class="secondary">Load</button>
+      <button id="btn-export" class="secondary">Export</button>
+      <button id="btn-import" class="secondary">Import</button>
+      <input type="file" id="import-file" accept="application/json">
+    </div>
+
+    <div class="grid" id="inputs-grid">
+      <!-- Box 1 -->
+      <div class="box">
+        <label>Location</label>
+        <input type="text" class="title" data-index="0">
+
+        <label>Date / Time</label>
+        <input type="text" class="small" data-index="0">
+      </div>
+
+      <!-- Box 2 -->
+      <div class="box">
+        <label>Location</label>
+        <input type="text" class="title" data-index="1">
+
+        <label>Date / Time</label>
+        <input type="text" class="small" data-index="1">
+      </div>
+
+      <!-- Box 3 -->
+      <div class="box">
+        <label>Location</label>
+        <input type="text" class="title" data-index="2">
+
+        <label>Date / Time</label>
+        <input type="text" class="small" data-index="2">
+      </div>
+
+      <!-- Box 4 -->
+      <div class="box">
+        <label>Location</label>
+        <input type="text" class="title" data-index="3">
+
+        <label>Date / Time</label>
+        <input type="text" class="small" data-index="3">
+      </div>
+    </div>
+
+    <h3>Preview</h3>
+    <div id="preview" class="preview"></div>
+
+  </div>
+
+<script src="admin.js"></script>
+</body>
+</html>

@@ -9,17 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Rasa:wght@300;400;700&display=swap" rel="stylesheet">
 
   <!-- external stylesheet -->
-  <link rel="stylesheet" href="utama.css">
+  <link rel="stylesheet" href="Home.css">
 </head>
 <body>
   <div class="device" role="document" aria-label="mock mobile canvas">
     <!-- HEADER -->
     <header class="appbar">
       <div class="brand-left" aria-hidden="true"></div>
-      <div class="brand-center" style="pointer-events:none;">
-        <span class="by">BY</span>
-        <span class="name">VERENT</span>
-      </div>
+<div class="brand-center" style="pointer-events:none;">
+  <img src="logos/lg3.png" alt="Brand Logo" style="height: 150px;">
+</div>
       <button class="icon-bell" aria-label="Notifications">
         <img src="acs/lcng.png" alt="bell icon">
       </button>
@@ -29,16 +28,25 @@
     <main class="content">
 
       <!-- BRANDS -->
-      <section aria-labelledby="brands-title">
-        <h2 class="section" id="brands-title">Brands</h2>
-        <div class="brands-wrap" role="list">
-          <div class="brand-item" role="listitem"><img src="logos/lg1.png" alt="Brand 1"></div>
-          <div class="brand-item" role="listitem"><img src="logos/lg2.png" alt="Brand 2"></div>
-          <div class="brand-item" role="listitem"><img src="logos/lg3.png" alt="Brand 3"></div>
-          <div class="brand-item" role="listitem"><img src="logos/lg4.png" alt="Brand 4"></div>
-          <div class="brand-item" role="listitem"><img src="logos/lg5.png" alt="Brand 5"></div>
-        </div>
-      </section>
+<!-- BRANDS -->
+<section aria-labelledby="brands-title">
+  <h2 class="section" id="brands-title">What are you looking for today?</h2>
+
+  <div class="brands-wrap">
+
+    <a href="drinks.html" class="brand-item">
+      <img src="logos/lg.2.2.png">
+      <div class="brand-label">Drinks</div>
+    </a>
+
+    <a href="desserts.html" class="brand-item">
+      <img src="logos/lg.1.1.png">
+      <div class="brand-label">Desserts</div>
+    </a>
+
+  </div>
+</section>
+
 
       <!-- DISCOVER -->
       <section aria-labelledby="discover-title" style="margin-top:12px;">
@@ -152,7 +160,7 @@
     guide you personally via WhatsApp.
   </p>
 
-  <a href="https://wa.me/6281234567890" target="_blank" class="wa-btn" aria-label="Chat on WhatsApp">
+  <a href="https://wa.me/628118281416" target="_blank" class="wa-btn" aria-label="Chat on WhatsApp">
     <img src="acs/wa.png" alt="WhatsApp logo">
   </a>
 </section>
@@ -180,5 +188,8 @@
     </button>
     
   </nav>
+  <!-- tambahkan ini sebelum penutup </body> -->
+<script src="Home.js"></script>
+
 </body>
 </html>
