@@ -1,0 +1,171 @@
+:root{
+  --bg: #F3F2F7;
+  --card: #ffffff;
+  --muted: #7b7b84;
+  --accent: #ffffff;
+  --accent-strong: #FFDBE0;
+  --shadow: 0 6px 18px rgba(18,18,18,0.06);
+  --maxw: 412px;
+  --nav-h: 76px;           /* tinggi nav yang diperkirakan */
+  --gap: 18px;
+  --sub: #9e9ea4;
+}
+
+/* Reset */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family: 'Rasa';
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  background: var(--accent);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 12px);
+}
+
+/* Frame: responsive height (maks 100vh), lebar tetap sampai maxw */
+.frame {
+  width:100%;
+  height: 100vh; /* biar full layar HP */
+  background: var(--bg);
+  border-radius: 0; /* no rounded corners */
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  box-shadow: none; /* optional: hilangkan shadow juga */
+  border: none; /* ⬅ hapus border pinknya */
+}
+
+
+/* APPBAR */
+header.appbar{
+  padding: 0;
+  background: transparent;
+  display:flex;
+  justify-content:center;
+}
+.appbar-inner{
+  width: 100%;
+  max-width: 412px;
+  margin: 12px auto 0;
+  background: linear-gradient(#faf8fb,#f6f4f8);
+  border-radius: 12px;
+  padding: 14px 18px; /* sedikit ramping agar tidak memakan tinggi */
+  position: relative;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  box-sizing: border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.brand-center{ text-align:center; pointer-events:none; }
+.brand-center .by{ display:block; font-size:clamp(10px, 1.6vw, 12px); color:#222; margin-bottom:4px; font-family:'Rasa', serif; }
+.brand-center .name{ font-size:clamp(18px, 3.6vw, 22px); font-weight:700; letter-spacing:1px; font-family:'Rasa', serif; color:#111; }
+
+/* bell button di kanan */
+.icon-bell{
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.icon-bell img{ width:20px; height:20px; display:block; }
+
+/* CONTENT: flexible, tumbuh untuk mengisi area */
+main.content{
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding: 0 18px;
+  gap: 12px;
+  color: var(--muted);
+  transform: translateY(200px); /* ubah sesuai kebutuhan */
+}
+
+
+/* face & typography */
+.empty-face{
+  width: clamp(72px, 20vw, 110px);
+  height: clamp(72px, 20vw, 110px);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:4px;
+  border: 2px solid rgba(0,0,0,0.06);
+  background: #fff;
+}
+.title{
+  font-size: clamp(15px, 3.2vw, 18px);
+  font-weight:700;
+  color:#111;
+}
+.subtitle{
+  font-size: clamp(11px, 2.2vw, 13px);
+  color:var(--muted);
+  line-height:1.4;
+  max-width: 78%;
+}
+
+/* BOTTOM NAV: fixed di viewport namun di-center sesuai mockup */
+.bottom-nav{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: env(safe-area-inset-bottom);
+  width: 100%;
+  max-width: var(--maxw);
+  background: var(--card);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -6px 22px rgba(0,0,0,0.12);
+  padding: 8px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:6px;
+  z-index:999;
+  height: var(--nav-h);
+}
+
+/* nav buttons */
+.nav-btn{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:6px;
+  border-radius:10px;
+  background:transparent;
+  border:none;
+  color:var(--sub);
+  font-size:12px;
+  cursor:pointer;
+}
+.nav-btn img{ width:22px; height:22px; display:block; filter:grayscale(1) opacity(.9); transition: .12s ease; }
+.nav-btn:hover img{ transform:translateY(-3px); }
+.nav-btn.active{ color:#000; font-weight:700; }
+.nav-btn.active img{ filter:none; }
+
+/* jika layar sangat kecil: kurangi padding & font */
+@media (max-width:360px){
+  .appbar-inner{ padding:12px 14px; }
+  .subtitle{ max-width:86%; }
+  :root{ --nav-h:70px; }
+}
+
+/* jika desktop/tablet lebih besar: tambahkan margin atas */
+@media (min-height:900px){
+  .appbar-inner{ margin-top:20px; }
+  .frame{ border-radius:18px; }
+}

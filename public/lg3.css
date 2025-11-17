@@ -1,0 +1,232 @@
+:root {
+  --bg: #F3F2F7;
+  --card: #FFFFFF;
+  --muted: #8D8A91;
+  --accent: #0A84FF;
+  --radius: 14px;
+  --container-width: 412px;
+}
+
+/* Reset dan base layout */
+* {
+  box-sizing: border-box;
+}
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family:'Rasa';
+  background: #ffffff; /* 🔥 ubah jadi hitam */
+  display: flex;
+  justify-content: center;
+  align-items: center; /* biar .phone tetap di tengah layar */
+  height: 100vh;
+  color: #111;
+}
+
+/* Phone container */
+  .phone {
+    width: 95vw;          /* sesuaikan lebar ke viewport */
+    max-width: 412px;     /* tetap batasi agar tidak terlalu besar di layar besar */
+    height: 90vh;         /* agar tidak melebihi tinggi layar */
+    margin: 8px auto;     /* center dan beri jarak */
+    border-radius: 10px;  /* jaga sudut tetap halus */
+    overflow: auto;       /* penting agar header/sticky bekerja */
+  }
+
+back
+/* Header (sticky di dalam .phone, tidak full-viewport) */
+header {
+  padding: 12px 14px;
+    align-items: flex-start;/* ⬅️ dulu 18px → dikurangi biar header lebih tipis dan logo naik */
+  display: flex;
+  align-items: flex-start; /* ⬅️ dorong semua elemen ke atas header */
+  gap: 12px;
+  background: linear-gradient(#F8F7FA, #F3F2F7);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+/* jika ingin header tampak "lebih kecil" di mobile, bisa adjust padding via media query later */
+
+.back {
+  color: #3B6BA5;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* dan ubah bagian logo-wrap */
+.logo-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* ⬅️ biar posisi logo di atas container */
+  margin-top: -60px; /* ⬅️ optional: bisa diganti -6 atau -8 kalau mau lebih mentok lagi */
+}
+
+.logo {
+  width: 150px;
+  max-width: 60%;
+  opacity: 0.98;
+}
+
+/* Main content */
+/* Tidak perlu padding-top ekstra karena header menempati ruang secara normal (sticky tetap dalam flow) */
+main {
+  padding: 18px 20px 40px;
+}
+
+.question {
+  font-size: 16px;
+  margin: -35px 0 14px; /* 🔥 ubah dari 6px → -4px biar teks naik dikit */
+  color: #111;
+}
+
+
+
+/* Category cards */
+.card-row {
+  padding: 0 10px 8px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.card-row::-webkit-scrollbar {
+  height: 10px;
+}
+.card-row::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+}
+
+.cat-card {
+  min-width: 150px;
+  height: 230px;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(15, 15, 15, 0.03);
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+  position: relative;
+  flex: 0 0 auto;
+  transition: all 0.25s ease;
+}
+
+.cat-card:hover {
+  transform: translateY(-8px) scale(1.04);  /* naik dikit + sedikit membesar */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* bayangan lebih kuat */
+  cursor: pointer;  /* ubah cursor biar kelihatan bisa diklik */
+}
+
+
+.img-placeholder {
+  position: absolute;
+  inset: 12px 12px 44px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #FAFAFC, #FFF);
+}
+
+/* Gaya untuk gambar di dalam category card */
+.cat-image {
+  position: absolute;
+  inset: 12px 12px 60px 12px; /* area yang sama seperti .img-placeholder sebelumnya */
+  width: calc(100% - 24px);
+  height: calc(100% - 72px);   /* sesuaikan bottom space untuk judul */
+  object-fit: cover;           /* cover agar proporsi rapi dan terpotong rapi */
+  border-radius: 12px;
+  display: block;
+  pointer-events: none;        /* agar klik tetap ke card, bukan gambar (opsional) */
+  user-select: none;
+}
+
+.cat-title {
+  font-size: 14px;
+  color: #2B2B2B;
+  text-align: left;
+  width: 100%;
+}
+
+/* Section title */
+.section-title {
+  margin: 20px 0 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Product list */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(15, 15, 15, 0.03);
+}
+
+.thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #E8E6EA, #F3F2F7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 56px;
+}
+
+.p-info {
+  flex: 1;
+  min-width: 0;
+}
+.p-title {
+  font-size: 14px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.p-sub {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.p-price {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #2B2B2B;
+}
+
+.add-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Responsive tweak */
+@media (max-width: 420px) {
+ body {
+    padding: 8px;
+  }
+
+  header {
+    padding: 14px 16px;
+  }
+}

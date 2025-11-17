@@ -1,0 +1,115 @@
+body {
+    /* 1. Hapus margin & padding 1px yang tidak diperlukan, 
+          tambahkan Flexbox untuk pemusatan penuh layar. */
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafa;
+    font-family: 'rasa';
+    
+    display: flex; /* Aktifkan Flexbox */
+    justify-content: center; /* Pusatkan horizontal */
+    align-items: center; /* Pusatkan vertikal */
+    min-height: 100vh; /* Pastikan Body setinggi viewport */
+}
+
+.sign-up-page {
+    width: 350px;
+    /* 2. KRUSIAL: Ubah HEIGHT menjadi auto atau hapus. 
+          Ini memungkinkan kontainer menyesuaikan tinggi konten di dalamnya. */
+    height: auto; 
+    
+    /* 3. Hapus margin: 40px auto; karena sudah dipusatkan oleh body Flexbox. */
+    /* margin: 40px auto; */
+    
+    /* Hapus juga align-items: center; karena konten (kartu) sudah auto-size */
+    /* display: flex;
+    justify-content: center;
+    align-items: center; */
+    
+    /* Tetap pertahankan gaya visual kontainer luar (biru muda) */
+    background-color: #f4efef;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.041);
+}
+
+ .card {
+    width: 85%;
+    background-color: #f4efef;
+    border-radius: 15px;
+    padding: 30px 25px; 
+    
+    /* Hapus Box-Shadow lama */
+    box-shadow: none; 
+
+    /* Gunakan filter untuk efek bayangan yang lebih lembut/menyerupai margin */
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
+}
+
+/* ... Properti CSS lainnya tetap sama ... */
+.card h2 {
+    text-align: center;
+    margin-bottom: 35px;
+    font-size: 25px;
+    font-weight: 600;
+}
+
+form label {
+    font-size: 14px;
+    font-weight: 500;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+form input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #f2f2f2;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper .toggle {
+    position: absolute;
+    right: 10px;
+    top: 9px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.create-btn {
+    width: 45%; /* Diubah dari 40% ke 70% agar tombol lebih besar/standar */
+    margin: 22px auto;
+    display: block;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    font-size: 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.create-btn:hover {
+    filter: brightness(120%); 
+    background-color: #007bff;
+}
+
+.signin-text {
+    text-align: center;
+    font-size: 13px;
+    margin-top: 15px;
+}
+
+.signin-text a {
+    text-decoration: none;
+    color: #000305;
+    font-weight: 600;
+}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Luxfleurid — Bow Charm Ring</title>
+  <link rel="stylesheet" href="item.css" />
+</head>
+<body>
+  <main class="product-page">
+
+    <!-- HEADER: back (kiri) + logo (tengah layar) -->
+    <header class="header">
+      <a href="#" class="back-link">← Back</a>
+      <img src="logos/lg5.png" alt="Luxfleurid" class="brand-logo" />
+    </header>
+
+    <!-- PRODUCT INFO (TENGAH, MEPET) -->
+    <section class="product-info">
+      <h1 class="product-name">Bow Charm Ring</h1>
+      <p class="product-material">18K Gold Plated Stainless Steel</p>
+      <p class="product-price">Rp 144.000</p>
+    </section>
+
+    <!-- GAMBAR PRODUK (DI BAWAH INFO) -->
+    <section class="product-media">
+      <img src="logos/image.png" alt="Bow Charm Ring" class="product-image" />
+    </section>
+
+    <!-- ACTIONS: Add to Bag di tengah, heart di kanan -->
+    <section class="product-actions">
+      <button class="add-btn" type="button">Add to Bag</button>
+
+      <div class="right-icons">
+        <!-- share (opsional kecil) -->
+        <button class="icon-btn" aria-label="Share product" title="Share">
+          <img src="icon-share.png" alt="" />
+        </button>
+
+        <!-- HEART SVG INTERAKTIF -->
+        <button class="heart" aria-pressed="false" aria-label="Like product" title="Like">
+          <svg viewBox="0 0 24 24" class="heart-icon" aria-hidden="true" focusable="false">
+            <path class="heart-path" d="M12.1 21.35l-1.1-1.02C5.14 15.24 2 12.44 2 8.9 2 6.24 4.24 4 6.9 4c1.94 0 3.6 1.12 4.2 2.72C11.5 5.12 13.16 4 15.1 4 17.76 4 20 6.24 20 8.9c0 3.54-3.14 6.35-8.99 11.43l-1.0 1.02z" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- DETAIL (boleh di-keep di bawah) -->
+    <section class="details">
+      <h2>Product Details</h2>
+      <p><strong>Material:</strong> 18K Gold Plated Stainless Steel</p>
+      <p><strong>Size:</strong> Adjustable</p>
+
+      <h3>Tips to make your jewelry last longer:</h3>
+      <ul>
+        <li>Avoid contact with chemicals (perfume, lotion, household cleaners).</li>
+        <li>Store in a dry place; remove before showering / swimming.</li>
+        <li>Clean gently with a soft cloth.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- CONTACT SECTION -->
+<section class="contact-section">
+  <h2>Got a question about this product?</h2>
+  <p>Our team will be happy to<br>assist you via WhatsApp</p>
+  <span class="contact-subtext">Click below to connect instantly.</span>
+
+  <a href="https://wa.me/6281234567890" target="_blank" class="whatsapp-btn" aria-label="Contact via WhatsApp">
+    <img src="icons/whatsapp.png" alt="WhatsApp" class="wa-icon" />
+  </a>
+</section>
+
+
+  <script>
+    // Toggle heart behavior + animation + accessible aria-pressed
+    document.addEventListener('DOMContentLoaded', () => {
+      const heartBtn = document.querySelector('.heart');
+      const heartPath = heartBtn.querySelector('.heart-path');
+
+      heartBtn.addEventListener('click', () => {
+        const active = heartBtn.classList.toggle('active');
+        heartBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+
+        // pulse animation
+        heartPath.classList.remove('pulse');
+        void heartPath.offsetWidth;
+        heartPath.classList.add('pulse');
+      });
+    });
+  </script>
+</body>
+</html>

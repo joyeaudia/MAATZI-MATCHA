@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gifting — Make it more you!</title>
+
+  <!-- Font (ubah bila perlu) -->
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Google Fonts: Rasa -->
+<link href="https://fonts.googleapis.com/css2?family=Rasa:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS eksternal -->
+  <link rel="stylesheet" href="gif.css">
+</head>
+<body>
+  <div class="frame" role="document" aria-label="Gifting page">
+    <header class="top-nav">
+      <button class="nav-action nav-left" type="button">Cancel</button>
+
+      <div class="title" aria-hidden="false">Gifting</div>
+
+      <button class="nav-action nav-right" type="button">Next</button>
+    </header>
+
+    <main class="content">
+      <!-- Hero card -->
+      <section class="hero" aria-labelledby="hero-title">
+        <!-- Ganti logo.png jika ingin pakai logo -->
+        <!-- <img src="logo.png" alt="Logo" class="logo"> -->
+
+        <h1 id="hero-title" class="hero-title">Make it<br>more you!</h1>
+        <p class="hero-sub">Turn your gift into something truly meaningful.
+          <br>Your message, your story comes to life with little animation magic!</p>
+      </section>
+
+      <!-- Form -->
+      <form class="gift-form" autocomplete="off" novalidate>
+        <label class="label" for="message">Personalize your gift message</label>
+        <textarea id="message" class="textarea" placeholder="Write your message here..." aria-label="Gift message"></textarea>
+
+        <label class="label" for="from">Who's this lovely gift from?</label>
+        <input id="from" class="input" placeholder="Add your name here" aria-label="From name">
+
+        <p class="label">Reveal the gift or keep it a surprise?</p>
+        <p class="hint small">You can choose to show what’s inside</p>
+
+        <div class="choice-row" role="radiogroup" aria-label="Reveal or keep a surprise">
+          <button type="button" class="btn choice-btn" data-choice="reveal" aria-pressed="true">Reveal it now</button>
+          <button type="button" class="btn choice-btn" data-choice="surprise" aria-pressed="false">Keep it a surprise</button>
+        </div>
+
+        <p class="label">Choose your gift card theme</p>
+        <div class="theme-row" aria-label="Themes">
+          <button type="button" class="theme-swatch empty" title="Theme 2" aria-pressed="false"></button>
+          <button type="button" class="theme-swatch empty" title="Theme 3" aria-pressed="false"></button>
+          <button type="button" class="theme-swatch empty" title="Theme 4" aria-pressed="false"></button>
+          <button type="button" class="theme-swatch empty" title="Theme 5" aria-pressed="false"></button>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="pink-strip" aria-hidden="true"></div>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // Choice buttons: behave like radio (single select)
+    (function() {
+      const choices = Array.from(document.querySelectorAll('.choice-btn'));
+      choices.forEach(btn => {
+        btn.addEventListener('click', () => {
+          choices.forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
+
+          // contoh: bisa simpan pilihan ke input hidden atau lakukan aksi lain
+          // console.log('Selected:', btn.dataset.choice);
+        });
+      });
+// Theme swatches: single select (seperti tombol reveal/keep)
+const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
+swatches.forEach(s => {
+  s.addEventListener('click', () => {
+    // reset semua
+    swatches.forEach(x => {
+      x.classList.remove('active');
+      x.setAttribute('aria-pressed','false');
+    });
+    // aktifkan yang diklik
+    s.classList.add('active');
+    s.setAttribute('aria-pressed','true');
+  });
+});
+    })();
+  </script>
+</body>
+</html>

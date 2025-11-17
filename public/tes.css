@@ -1,0 +1,27 @@
+:root{
+  --muted:#9b98a3;
+  --accent:#007bff;
+  --bg:#F3F2F7;
+  font-family: "Rasa", serif;
+}
+body{margin:0;background:var(--bg);font-family:var(--font)}
+.container{max-width:412px;margin:16px auto;padding:12px}
+.tabs{display:flex;gap:10px;margin:12px 0}
+.tab-btn{
+  flex:1;
+  padding:8px 10px;border-radius:10px;border:1px solid transparent;
+  background:transparent;cursor:pointer;font-weight:600;
+}
+.tab-btn.active{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(0,123,255,0.12)}
+.tab-panel{margin-top:12px}
+.hidden{display:none}
+
+/* order-card contoh */
+.order-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+
+/* bottom nav */
+.bottom-nav{position:fixed;left:0;right:0;bottom:12px;max-width:430px;margin:0 auto;display:flex;justify-content:space-around;background:#fff;padding:10px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+.nav-btn{background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted)}
+.nav-btn.active span{color:#000;font-weight:600}
+.nav-btn img{width:22px;height:22px;opacity:0.6}
+.nav-btn.active img{opacity:1}

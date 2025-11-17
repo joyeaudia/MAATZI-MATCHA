@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Your Orders</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rasa:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tes.css">
+</head>
+<body>
+  <header class="topbar">
+    <img src="logo.png" alt="logo" class="logo">
+  </header>
+
+  <main class="container">
+    <h1>Your Orders</h1>
+    <p class="subtitle">Track, manage, and revisit your orders.</p>
+
+    <!-- Tabs controls -->
+    <div class="tabs" role="tablist" aria-label="Order tabs">
+      <button role="tab" aria-selected="true" data-tab="active" class="tab-btn active">Active</button>
+      <button role="tab" aria-selected="false" data-tab="scheduled" class="tab-btn">Scheduled</button>
+      <button role="tab" aria-selected="false" data-tab="history" class="tab-btn">History</button>
+    </div>
+
+    <!-- Tab contents (semua ada di DOM; tampilkan salah satu) -->
+    <section id="tab-active" class="tab-panel">
+      <!-- konten Active -->
+      <div class="order-card">... Active view content ...</div>
+    </section>
+
+    <section id="tab-scheduled" class="tab-panel hidden">
+      <!-- konten Scheduled -->
+      <div class="order-card">... Scheduled view content ...</div>
+    </section>
+
+    <section id="tab-history" class="tab-panel hidden">
+      <!-- konten History -->
+      <div class="order-card">... History view content ...</div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="nav-btn active"><img src="icon-orders.png" alt=""><span>Orders</span></button>
+    <button class="nav-btn"><img src="icon-bag.png" alt=""><span>Bag</span></button>
+    <button class="nav-btn"><img src="icon-home.png" alt=""><span>Home</span></button>
+    <button class="nav-btn"><img src="icon-search.png" alt=""><span>Search</span></button>
+    <button class="nav-btn"><img src="icon-profile.png" alt=""><span>Profile</span></button>
+  </nav>
+
+  <script src="tes.js"></script>
+</body>
+</html>

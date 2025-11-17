@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animasi Logo Kelap-Kelip</title>
+    <style>
+        /* CSS untuk Tampilan Full Layar Putih dan Posisi Tengah */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center; /* Pusatkan horizontal */
+            align-items: center; /* Pusatkan vertikal */
+            min-height: 100vh; /* Tinggi minimum 100% viewport */
+            background-color: white; /* Latar belakang putih */
+            overflow: hidden; /* Sembunyikan scrollbar */
+        }
+
+        /* Container untuk Gambar dan Efek */
+        .logo-container {
+            position: relative;
+            width: 200px; /* Ukuran wadah, sesuaikan dengan ukuran gambar Anda */
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Gaya untuk Gambar */
+        .logo-container img {
+            max-width: 100%;
+            max-height: 100%;
+            position: absolute;
+            opacity: 0; /* Semua gambar dimulai dengan tersembunyi */
+            transition: opacity 0.05s ease-in-out; /* Transisi untuk pergantian gambar cepat */
+        }
+
+        .logo-container img.active {
+            opacity: 1; /* Gambar yang sedang aktif */
+        }
+
+        /* Gaya khusus untuk fade-in logo akhir */
+        .logo-container img.final-fade-in {
+            transition: opacity 1s ease-in-out; /* Transisi lebih lambat untuk logo akhir */
+        }
+
+        /* Efek Cahaya Kelap-Kelip di Belakang Gambar */
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%; /* Ukuran efek cahaya */
+            height: 150%;
+            background: radial-gradient(circle, rgba(16, 214, 214, 0.7) 0%, transparent 70%); /* Biru berkilau */
+            transform: translate(-50%, -50%) scale(0); /* Mulai tersembunyi */
+            border-radius: 50%;
+            opacity: 0;
+            z-index: -1; /* Di belakang gambar */
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out; /* Transisi untuk menghilangkan cahaya */
+        }
+        
+        .logo-container.shining::before {
+            animation: kelapKelip 0.2s infinite alternate; /* Aktifkan animasi saat diperlukan */
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Keyframes untuk Animasi Kelap-Kelip */
+        @keyframes kelapKelip {
+            from {
+                opacity: 0.6;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo-container" id="logoContainer">
+        <img id="lg1" src="logos/lg1.png" alt="Logo 1">
+        <img id="lg2" src="logos/lg2.png" alt="Logo 2">
+        <img id="lg3" src="logos/lg3.png" alt="Logo 3">
+        <img id="lg4" src="logos/lg4.png" alt="Logo 4">
+        <img id="lg5" src="logos/lg5.png" alt="Logo 5">
+        <img id="lgut" src="logos/lgut.png" alt="Logo Akhir">
+    </div>
+    
+<script>
+    const container = document.getElementById('logoContainer');
+    const fastLogos = ['lg1', 'lg2', 'lg3', 'lg4', 'lg5']; 
+    const finalLogoId = 'lgut'; 
+    
+    let currentIndex = 0;
+    const intervalTime = 100; // Kecepatan pergantian (sesuai setting Anda)
+    const totalDuration = 1500; // Total waktu loop cepat
+
+    function showLogo(id, isFinal = false) {
+        // Hapus class 'active' dan 'final-fade-in' dari semua gambar
+        document.querySelectorAll('.logo-container img').forEach(img => {
+            img.classList.remove('active', 'final-fade-in');
+        });
+
+        // Ambil elemen berdasarkan ID
+        const logo = document.getElementById(id); 
+        
+        if (logo) {
+            logo.classList.add('active'); // Tampilkan gambar yang sesuai ID
+            if (isFinal) {
+                logo.classList.add('final-fade-in'); // Tambahkan kelas untuk fade-in logo akhir
+            }
+        } else {
+            console.error("Error: Gambar dengan ID '" + id + "' tidak ditemukan.");
+        }
+    }
+
+    function startFastLoop() {
+        container.classList.add('shining'); // Aktifkan efek cahaya kelap-kelip
+        
+        const startTime = Date.now();
+        
+        const fastInterval = setInterval(() => {
+            // Hentikan setelah totalDuration tercapai
+            if (Date.now() - startTime >= totalDuration) {
+                clearInterval(fastInterval);
+                showFinalLogo();
+                return;
+            }
+
+            // Tampilkan gambar berikutnya menggunakan ID dari array fastLogos
+            const currentLogoId = fastLogos[currentIndex]; 
+            showLogo(currentLogoId);
+            
+            // Pindah ke indeks berikutnya
+            currentIndex = (currentIndex + 1) % fastLogos.length;
+        }, intervalTime);
+    }
+
+    function showFinalLogo() {
+        container.classList.remove('shining'); // Nonaktifkan efek cahaya kelap-kelip
+        
+        // Tampilkan gambar akhir menggunakan ID 'lgut' dengan efek fade-in
+        showLogo(finalLogoId, true); 
+    }
+
+    window.onload = startFastLoop;
+
+function showFinalLogo() {
+    container.classList.remove('shining'); // Nonaktifkan efek cahaya kelap-kelip
+    
+    // Tampilkan gambar akhir menggunakan ID 'lgut' dengan efek fade-in
+    showLogo(finalLogoId, true); 
+
+    // Setelah beberapa detik (misalnya 2 detik), pindah ke halaman signup
+    setTimeout(() => {
+        window.location.href = "singup.html";
+    }, 5000); // 2000ms = 2 detik, bisa kamu ubah sesuai selera
+}
+
+</script>
+</body>
+</html>
