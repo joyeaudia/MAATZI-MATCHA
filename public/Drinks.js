@@ -25,4 +25,5 @@
           card.classList.add('selected');
         }
       });
+      
     });
