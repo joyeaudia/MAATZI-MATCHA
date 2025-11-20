@@ -67,7 +67,7 @@ html,body{height:100%;margin:0;
   background: var(--card-bg);
   border-radius: var(--card-radius);
  min-height: 300px; /* sebelumnya 260px */
-  padding: 28px;
+  padding: 24px 18px 28px;
   box-shadow: 0 1px 0 rgba(16,20,24,0.04), 0 6px 12px rgba(16,20,24,0.04);
   position: relative;
   min-height: 320px; /* sebelumnya 200px — bikin kartu lebih panjang */
@@ -87,22 +87,15 @@ html,body{height:100%;margin:0;
 }
 
 .card-image {
-  background: #f7f6f9;
+  background: none;
   border-radius: 8px;
-  height: 420px;            /* <- ukuran area gambar, naikkan jika perlu */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  display: block;            /* biarkan mengikuti ukuran gambar */
+  overflow: visible;         /* biarkan gambar keluar */
   margin-bottom: 12px;
+  display:block;
+  margin-bottom: 18px;
 }
 
-.card-image img {
-  width: 100%;            /* isi lebar kontainer */
-  height: 100%;           /* isi tinggi kontainer */
-  object-fit: contain;    /* tetap proporsional, tidak terpotong */
-  display: block;
-}
 
 .card:active{ transform: translateY(1px); }
 .card.selected{
@@ -160,24 +153,6 @@ html,body{height:100%;margin:0;
 
 
 
-/* Card image area */
-.card-image{
-  background:#f7f6f9;
-  border-radius:8px;
-  height:110px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  margin-bottom:12px;
-}
-.card-image img{
-  max-width:86%;
-  max-height:86%;
-  object-fit:contain;
-  display:block;
-}
-
 /* Card body text */
 .card-body{
   font-size:13px;
@@ -198,10 +173,18 @@ html,body{height:100%;margin:0;
   color:#2b7dbd;
 }
 
-/* small screens adjustment */
-@media (max-width:420px){
-  .page{ padding:10px; margin:12px auto;}
-  .card{ min-height:300px; padding:12px } 
-  .card-image { height: 200px; }
-
+.card-image img {
+  object-fit: contain;        /* biar tidak crop */
+  object-position: top center;/* prioritaskan bagian atas kalau pakai cover */
+  width: 100%;
+  height: auto;
+  display: block;
 }
+
+.card-image {
+  background-size: contain;       /* jangan cover */
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+
