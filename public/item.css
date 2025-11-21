@@ -1,5 +1,5 @@
 :root{
-  --bg: #FAFAFA;
+  --bg: #ffffff;
   --text: #111;
   --muted: #7a7a7a;
   --accent: #007aff;
@@ -97,7 +97,7 @@ body{
   height:auto;         /* biarkan tinggi mengikuti proporsi */
   object-fit: contain; /* jangan crop, skala untuk muat */
   border-radius:12px;
-  background:#f3f3f3;
+  background:#ffffff;
   display:block;
   box-shadow: 0 6px 18px rgba(0,0,0,0.04);
   padding: 18px;       /* opsional: beri ruang putih di sekitar gambar */
@@ -269,3 +269,26 @@ body{
   .product-page{ padding:24px; }
   .brand-logo{ width:140px; }
 }
+
+
+.option-group { margin:12px 0; }
+.group-title { font-weight:600; margin-bottom:8px; }
+.choices { display:flex; gap:8px; flex-wrap:wrap; }
+.opt-btn, .addon-btn {
+  border:1px solid #e6e6e6;
+  background:#fff;
+  padding:8px 12px;
+  border-radius:999px;
+  cursor:pointer;
+  font-size:14px;
+}
+.opt-btn[aria-pressed="true"],
+.addon-btn[aria-pressed="true"] {
+  background:#1ea85e;
+  color:#fff;
+  border-color:rgba(0,0,0,0.06);
+  box-shadow:0 4px 10px rgba(0,0,0,0.06);
+}
+.opt-btn:focus, .addon-btn:focus { outline:3px solid rgba(30,168,94,0.12); }
+.small { color:#6f766e; font-size:13px; margin-top:6px; }
+
