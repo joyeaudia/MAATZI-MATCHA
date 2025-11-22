@@ -1,150 +1,124 @@
-// item.js - robust price parsing & update (fixes double display bug and ensures correct math)
-(function(){
+// item.js — dynamic loader: fetch item.json, render product fields, then init options logic
+(async function () {
   'use strict';
 
-  // format number to Indonesian currency without fraction (e.g. 28000 -> "Rp 28.000")
-  function formatPrice(n){
-    n = Number(n) || 0;
-    return 'Rp ' + new Intl.NumberFormat('id-ID').format(n);
+  // helpers
+  const q = s => document.querySelector(s);
+  const formatPrice = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n) || 0);
+  const intVal = v => Number(String(v).replace(/[^\d]/g, '')) || 0;
+  const getIdFromUrl = () => new URLSearchParams(location.search).get('id');
+
+  // try fetch item.json (adjust filename if you use another name)
+  async function loadProducts() {
+    const urls = ['item.json', 'products.json', '/item.json', '/products.json'];
+    for (const u of urls) {
+      try {
+        const res = await fetch(u, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const json = await res.json();
+        if (Array.isArray(json)) return json;
+      } catch (e) { /* ignore and try next */ }
+    }
+    throw new Error('products file not found (tried item.json/products.json)');
   }
 
-  // safe integer parse helper
-  function intVal(v){ return Number(String(v).replace(/[^\d-]/g,'')) || 0; }
-
-  document.addEventListener('DOMContentLoaded', function(){
-
-    const priceEl = document.getElementById('product-price');
-    const oldEl = document.getElementById('old-price');
-
-    if (!priceEl) {
-      console.error('item.js: #product-price element not found');
-      return;
-    }
-
-    // read numeric base & old values from data attributes (preferred) or fallback
-    const base = intVal(priceEl.getAttribute('data-base') || priceEl.dataset.base || priceEl.textContent);
-    const oldPrice = oldEl ? intVal(oldEl.getAttribute('data-old') || oldEl.dataset.old || oldEl.textContent) : 0;
-
-    // initialize display (format both)
-    priceEl.textContent = formatPrice(base);
-    if (oldEl) {
-      if (oldPrice > 0 && oldPrice !== base) {
-        oldEl.textContent = formatPrice(oldPrice);
-        oldEl.style.display = ''; // ensure visible
+  // main
+  try {
+    const id = getIdFromUrl();
+    if (!id) {
+      console.error('No product id in URL (use ?id=product-id)');
+      // optionally keep default static content
+    } else {
+      const products = await loadProducts();
+      const product = products.find(p => p.id === id);
+      if (!product) {
+        console.error('Product not found for id:', id);
       } else {
-        // hide old price if not meaningful
-        oldEl.style.display = 'none';
+        // render fields (selectors must exist in item.html)
+        const nameEl = q('.product-name');
+        const subEl = q('.product-subtitle'); // optional
+        const priceEl = q('#product-price');
+        const imgEl = q('.product-image'); // may be <img> or container
+        const descEl = q('#detail-desc');
+
+        if (nameEl) {
+          nameEl.textContent = product.title || '';
+          nameEl.dataset.id = product.id; // helpful for cart
+        }
+        if (subEl) subEl.textContent = product.subtitle || '';
+        if (priceEl) {
+          priceEl.dataset.base = product.price || 0; // numeric base for option logic
+          priceEl.textContent = formatPrice(product.price || 0);
+          priceEl.setAttribute('aria-live', 'polite');
+        }
+        if (imgEl) {
+          // handle two cases: .product-image is an <img> or a container div
+          if (imgEl.tagName && imgEl.tagName.toLowerCase() === 'img') {
+            imgEl.src = (product.images && product.images[0]) || '';
+            imgEl.alt = product.title || '';
+          } else {
+            imgEl.innerHTML = `<img src="${(product.images && product.images[0]) || ''}" alt="${product.title || ''}" />`;
+          }
+        }
+        if (descEl) descEl.innerHTML = product.description || '';
+
+        // now product fields updated — proceed to initialize options/price logic
+        // If you have initOptionButtons() and updatePriceFromUI() in your item.js previously,
+        // call them here. Example:
+        if (typeof window.initOptionButtons === 'function') window.initOptionButtons();
+        if (typeof window.updatePriceFromUI === 'function') window.updatePriceFromUI();
       }
     }
+  } catch (err) {
+    console.error('Error loading product:', err);
+  }
 
+  // --- If you don't have global init functions, include (or append) your options + price logic here ---
+  // Below is a compact version of option init & price update if you haven't separated them:
+  // (You can remove if you already have the full item.js logic loaded after this script.)
+  function attachOptionLogic() {
+    // single small implementation to make sure price updates use #product-price[data-base]
+    const priceEl = q('#product-price');
+    const base = intVal(priceEl?.dataset.base || 0);
     let currentTotal = base;
 
-    function initOptionButtons(){
-      document.querySelectorAll('.option-group').forEach(group => {
-        const key = group.dataset.key;
-        const isAddon = key === 'addons';
-        const buttons = Array.from(group.querySelectorAll('button'));
+    function updatePriceFromUI() {
+      let total = base;
+      const milkSel = document.querySelector('.option-group[data-key="milk"] button[aria-pressed="true"]');
+      if (milkSel) total += intVal(milkSel.dataset.priceDelta || 0);
+      document.querySelectorAll('.option-group[data-key="addons"] button[aria-pressed="true"]').forEach(b => total += intVal(b.dataset.price || 0));
+      currentTotal = total;
+      if (priceEl) priceEl.textContent = formatPrice(total);
+    }
 
-        buttons.forEach(btn => {
-          // normalize data attributes
-          if (btn.hasAttribute('data-price-delta') && !btn.dataset.priceDelta) {
-            btn.dataset.priceDelta = btn.getAttribute('data-price-delta');
+    // initialize button behaviors (radio-like & toggles)
+    document.querySelectorAll('.option-group').forEach(group => {
+      const buttons = Array.from(group.querySelectorAll('button'));
+      const isAddon = group.dataset.key === 'addons';
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (isAddon) {
+            const cur = btn.getAttribute('aria-pressed') === 'true';
+            btn.setAttribute('aria-pressed', (!cur).toString());
+          } else {
+            buttons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+            btn.setAttribute('aria-pressed', 'true');
           }
-          if (btn.hasAttribute('data-price') && !btn.dataset.price) {
-            btn.dataset.price = btn.getAttribute('data-price');
-          }
-
-          btn.addEventListener('click', (ev) => {
-            if (isAddon) {
-              const pressed = btn.getAttribute('aria-pressed') === 'true';
-              btn.setAttribute('aria-pressed', (!pressed).toString());
-            } else {
-              // single-select logic
-              buttons.forEach(b => b.setAttribute('aria-pressed', 'false'));
-              btn.setAttribute('aria-pressed', 'true');
-            }
-            updatePriceFromUI();
-          });
-
-          btn.addEventListener('keydown', (ev) => {
-            if (ev.key === ' ' || ev.key === 'Spacebar' || ev.key === 'Enter') {
-              ev.preventDefault();
-              btn.click();
-            }
-          });
+          updatePriceFromUI();
+        });
+        btn.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') { ev.preventDefault(); btn.click(); }
         });
       });
-    }
+    });
 
-    function updatePriceFromUI(){
-      let total = base;
+    window.updatePriceFromUI = updatePriceFromUI; // expose for earlier call
+    window.initOptionButtons = function () { /* noop if already attached */ }; // placeholder
+    // run one update
+    setTimeout(updatePriceFromUI, 40);
+  }
 
-      // milk selection price delta (data-price-delta)
-      const milkSel = document.querySelector('.option-group[data-key="milk"] button[aria-pressed="true"]');
-      if (milkSel) {
-        total += intVal(milkSel.dataset.priceDelta || 0);
-      }
+  // attach logic (if not already present)
+  attachOptionLogic();
 
-      // add-ons (sum of data-price)
-      document.querySelectorAll('.option-group[data-key="addons"] button[aria-pressed="true"]').forEach(b => {
-        total += intVal(b.dataset.price || 0);
-      });
-
-      currentTotal = total;
-      priceEl.textContent = formatPrice(total);
-    }
-
-    function getSelectedOptions(){
-      const out = {};
-      document.querySelectorAll('.option-group').forEach(g => {
-        const key = g.dataset.key;
-        if (key === 'addons') {
-          out[key] = Array.from(g.querySelectorAll('button[aria-pressed="true"]')).map(x => x.dataset.id);
-        } else {
-          const sel = g.querySelector('button[aria-pressed="true"]');
-          out[key] = sel ? sel.dataset.value : null;
-        }
-      });
-      out.notes = document.getElementById('notes') ? document.getElementById('notes').value.trim() : '';
-      return out;
-    }
-
-    // cart helpers
-    const CART_KEY = 'verent_cart_v1';
-    function getCart(){ try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch(e){ return []; } }
-    function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); }
-
-    // add to cart handler
-    const addBtn = document.getElementById('add-to-cart');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        const selected = getSelectedOptions();
-        const item = {
-          id: (document.querySelector('.product-name') && document.querySelector('.product-name').dataset.id) || 'unknown',
-          title: document.querySelector('.product-name') ? document.querySelector('.product-name').textContent.trim() : 'Product',
-          price_base: base,
-          total: currentTotal,
-          selected,
-          old_price: oldPrice || null
-        };
-        const cart = getCart();
-        cart.push(item);
-        saveCart(cart);
-        addBtn.textContent = 'Added ✓';
-        setTimeout(()=> addBtn.textContent = 'Add to Bag', 900);
-      });
-    }
-
-    initOptionButtons();
-    updatePriceFromUI();
-
-    // heart toggle
-    const heart = document.querySelector('.heart');
-    if (heart) {
-      heart.addEventListener('click', () => {
-        const is = heart.classList.toggle('active');
-        heart.setAttribute('aria-pressed', is ? 'true' : 'false');
-      });
-    }
-  });
 })();
