@@ -10,7 +10,7 @@
 
   // try fetch item.json (adjust filename if you use another name)
   async function loadProducts() {
-    const urls = ['item.json', 'products.json', '/item.json', '/products.json'];
+    const urls = ['drsi.json', 'products.json', '/drsi.json', '/products.json'];
     for (const u of urls) {
       try {
         const res = await fetch(u, { cache: 'no-store' });
@@ -19,7 +19,7 @@
         if (Array.isArray(json)) return json;
       } catch (e) { /* ignore and try next */ }
     }
-    throw new Error('products file not found (tried item.json/products.json)');
+    throw new Error('products file not found (tried drsi.json/products.json)');
   }
 
   // main
