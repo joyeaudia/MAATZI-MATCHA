@@ -296,16 +296,15 @@ body{
   width: ture;
 }
 
-
 .product-name {
-  font-size: 130%;        /* title lebih besar */
+  font-size: 150%;        /* title lebih besar */
   font-weight: 700;       /* lebih tebal */
   margin-bottom: 4px;     /* jarak kecil ke subtitle */
   line-height: 1.2;
 }
 
 .product-subtitle {
-  font-size: 100%;      /* sedikit lebih kecil dari title */
+  font-size: 1rem;      /* sedikit lebih kecil dari title */
   font-weight: 400;
   margin-top: 0;          /* hilangkan jarak atas */
   margin-bottom: 1rem;    /* jarak bawah normal */
