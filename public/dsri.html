@@ -33,8 +33,8 @@
       <div class="option-group" role="group" aria-label="Milk Options" data-key="milk">
         <div class="group-title">Milk Options</div>
         <div class="choices">
-          <button type="button" class="opt-btn" data-value="fresh" aria-pressed="true" data-price-delta="0">Fresh Milk</button>
-          <button type="button" class="opt-btn" data-value="oat" aria-pressed="false" data-price-delta="3000">Oat Milk (+3K)</button>
+          <button type="button" class="opt-btn" data-value="fresh" aria-pressed="true" data-price="0">Fresh Milk</button>
+          <button type="button" class="opt-btn" data-value="oat" aria-pressed="false" data-price="3000">Oat Milk (+3K)</button>
         </div>
         <div class="small-note">If no note is added, Fresh Milk is used by default.</div>
       </div>
@@ -53,7 +53,7 @@
         <div class="group-title">Add-Ons</div>
         <div class="choices">
           <button type="button" class="addon-btn" data-id="yuki" data-price="15000" aria-pressed="false">Powder Upgrade: YUKI (+15K)</button>
-          <button type="button" class="addon-btn" data-id="thermal_bag" data-price="10000" aria-pressed="false">Thermal Bag (+10K)</button>
+          <button type="button" class="addon-btn" data-id="thermal-bag" data-price="10000" aria-pressed="false">Thermal Bag (+10K)</button>
         </div>
         <div class="small-note">Thermal Bag: Keep your drink cold and ice intact (available for deliveries within 3 km only).</div>
       </div>
@@ -63,8 +63,20 @@
       <button class="add-btn" id="add-to-cart" type="button">Add to Bag</button>
       <div class="right-icons">
         <button class="icon-btn" aria-label="Share product" title="Share">
-          <img src="icon-share.png" alt="" width="20" height="20" />
-        </button>
+<button id="share-btn" class="icon-btn" aria-label="Share product" title="Share">
+  <img src="acs/By.png" alt="Share" width="20" height="20" />
+</button>
+
+
+<!-- simple share menu (initially hidden) -->
+<div id="share-menu" class="share-menu" role="dialog" aria-hidden="true" style="display:none;">
+  <button data-action="copy">Copy Link</button>
+  <button data-action="native">Share</button>
+  <button id="share-close">Close</button>
+</div>
+
+<!-- toast -->
+ <div id="share-toast" class="share-toast" hidden>Link copied!</div>
 
         <button class="heart" aria-pressed="false" aria-label="Like product" title="Like">
           <svg viewBox="0 0 24 24" class="heart-icon" aria-hidden="true" focusable="false" width="20" height="20">
@@ -78,7 +90,7 @@
       <h2>Product Details</h2>
       <p id="detail-desc"><strong>Description:</strong> Indulge in the comforting warmth of Hojicha Latte... (example)</p>
 
-      <h3>Noted</h3>
+      <h3>Noted :</h3>
       <ul id="tips-list">
         <li>Serve chilled for best taste.</li>
         <li>Consume within 4 hours for optimal freshness.</li>
@@ -91,7 +103,7 @@
     <h2>Got a question about this product?</h2>
     <p>Our team will be happy to<br>assist you via WhatsApp</p>
     <a href="https://wa.me/6281234567890" target="_blank" class="whatsapp-btn" aria-label="Contact via WhatsApp">
-      <img src="icons/whatsapp.png" alt="WhatsApp" class="wa-icon" />
+      <img src="acs/wa.png" alt="WhatsApp" class="wa-icon" />
     </a>
   </section>
 

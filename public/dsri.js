@@ -297,3 +297,89 @@ if (tipsList) {
 }
 
 )(); // end IIFE
+
+
+
+// ---- Share menu IIFE (separate, runs after DOM ready because script is at body end) ----
+(function(){
+  const shareBtn = document.getElementById('share-btn');
+  const shareMenu = document.getElementById('share-menu');
+  const shareToast = document.getElementById('share-toast');
+  const shareClose = document.getElementById('share-close');
+
+  if (!shareBtn || !shareMenu) return; // nothing to do
+
+  // use actual current page url
+  const shareUrl = window.location.href;
+
+  function showMenu() {
+    shareMenu.style.display = 'block';
+    shareMenu.setAttribute('aria-hidden', 'false');
+  }
+  function hideMenu() {
+    shareMenu.style.display = 'none';
+    shareMenu.setAttribute('aria-hidden', 'true');
+  }
+  function showToast(msg='Link copied!') {
+    if (!shareToast) return;
+    shareToast.textContent = msg;
+    shareToast.hidden = false;
+    setTimeout(()=> shareToast.hidden = true, 1600);
+  }
+
+  // copy to clipboard
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Link disalin ke clipboard');
+    } catch(e) {
+      const ta = document.createElement('textarea');
+      ta.value = shareUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast('Link disalin ke clipboard'); } catch(err) { alert('Copy failed. Link: ' + shareUrl); }
+      document.body.removeChild(ta);
+    }
+    hideMenu();
+  }
+
+  // Web Share API (native)
+  async function nativeShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: document.title || 'Check this product',
+          text: 'Lihat produk ini:',
+          url: shareUrl
+        });
+      } catch(err) {
+        // ignore
+      }
+    } else {
+      const wa = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(shareUrl);
+      window.open(wa, '_blank');
+    }
+    hideMenu();
+  }
+
+
+  // event binding
+  shareBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    showMenu();
+  });
+  shareClose?.addEventListener('click', hideMenu);
+
+  shareMenu.addEventListener('click', e => {
+    const act = e.target.getAttribute('data-action');
+    if (!act) return;
+    if (act === 'copy') copyLink();
+    if (act === 'native') nativeShare();
+  });
+
+  // close when clicking outside
+  document.addEventListener('click', (ev) => {
+    if (!shareMenu.contains(ev.target) && ev.target !== shareBtn) hideMenu();
+  });
+
+})();

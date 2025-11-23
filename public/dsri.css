@@ -310,3 +310,87 @@ body{
   margin-bottom: 1rem;    /* jarak bawah normal */
   color: #555;            /* opsional: warna lebih soft */
 }
+
+
+/* === SHARE MENU (versi clean & premium, posisi tetap) === */
+
+.share-menu {
+  position: absolute;
+  top: 40px;      /* posisi TETAP seperti versi awal */
+  right: 0;       /* posisi TETAP */
+  display: none;
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+  border: 1px solid rgba(0,0,0,0.06);
+  min-width: 150px;
+  z-index: 999;
+  animation: shareFade .18s ease-out;
+}
+
+@keyframes shareFade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.share-menu button {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: none;
+  background: #f7f7f7;
+  color: #222;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease, transform .12s ease;
+}
+
+.share-menu button:hover {
+  background: #eef3ff;
+  transform: translateX(4px);
+}
+
+.share-menu button:last-child {
+  margin-bottom: 0;
+}
+
+/* === TOAST / NOTIFICATION === */
+.share-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity .25s ease;
+  z-index: 1200;
+}
+
+.share-toast.show {
+  opacity: 1;
+}
+/* FIX posisi popup share supaya tepat di atas tombol share */
+.right-icons {
+  position: relative; /* container jadi anchor */
+}
+
+#share-menu {
+  position: absolute;
+  top: -10px;          /* naikkan menu */
+  right: 0;            /* sejajarkan ke kanan icon */
+  transform: translateY(-100%); /* tepat muncul di atas tombol */
+  z-index: 999;
+}
+#share-menu {
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+}

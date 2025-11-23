@@ -62,9 +62,21 @@
     <section class="product-actions">
       <button class="add-btn" id="add-to-cart" type="button">Add to Bag</button>
       <div class="right-icons">
-        <button class="icon-btn" aria-label="Share product" title="Share">
-          <img src="icon-share.png" alt="" width="20" height="20" />
-        </button>
+     <!-- share icon -->
+<button id="share-btn" class="icon-btn" aria-label="Share product" title="Share">
+  <img src="acs/By.png" alt="Share" width="20" height="20" />
+</button>
+
+
+<!-- simple share menu (initially hidden) -->
+<div id="share-menu" class="share-menu" role="dialog" aria-hidden="true" style="display:none;">
+  <button data-action="copy">Copy Link</button>
+  <button data-action="native">Share</button>
+  <button id="share-close">Close</button>
+</div>
+
+<!-- toast -->
+ <div id="share-toast" class="share-toast" hidden>Link copied!</div>
 
         <button class="heart" aria-pressed="false" aria-label="Like product" title="Like">
           <svg viewBox="0 0 24 24" class="heart-icon" aria-hidden="true" focusable="false" width="20" height="20">
@@ -91,7 +103,7 @@
     <h2>Got a question about this product?</h2>
     <p>Our team will be happy to<br>assist you via WhatsApp</p>
     <a href="https://wa.me/6281234567890" target="_blank" class="whatsapp-btn" aria-label="Contact via WhatsApp">
-      <img src="icons/whatsapp.png" alt="WhatsApp" class="wa-icon" />
+      <img src="acs/wa.png" alt="WhatsApp" class="wa-icon" />
     </a>
   </section>
 
