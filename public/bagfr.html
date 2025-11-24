@@ -129,29 +129,20 @@
 
       <!-- Liked by you -->
       <section class="liked">
-        <h3>Liked by you?</h3>
-        <div class="liked-row" role="list">
-          <article class="like-card" role="listitem">
-            <div class="like-thumb"><img src="logos/image.png" alt=""></div>
-            <div class="like-body">
-              <div class="like-title">Bow Charm Ring</div>
-            </div>
-            <button type="button" class="like-heart" aria-label="Like" aria-pressed="false">❤</button>
-          </article>
+<!-- Liked by you -->
+<!-- Liked by you -->
+<section class="liked" aria-labelledby="liked-title">
+  <h3 id="liked-title">Liked by you</h3>
 
-          <article class="like-card" role="listitem">
-            <div class="like-thumb"><img src="thumb-placeholder.png" alt=""></div>
-            <div class="like-body"><div class="like-title">Bow Charm Ring</div></div>
-            <button type="button" class="like-heart" aria-label="Like" aria-pressed="false">❤</button>
-          </article>
+  <!-- container where JS will render liked cards -->
+  <div class="liked-row" id="liked-row" role="list" aria-live="polite"></div>
 
-          <article class="like-card" role="listitem">
-            <div class="like-thumb"><img src="thumb-placeholder.png" alt=""></div>
-            <div class="like-body"><div class="like-title">Bow Charm Ring</div></div>
-            <button type="button" class="like-heart" aria-label="Like" aria-pressed="false">❤</button>
-          </article>
-        </div>
-      </section>
+  <noscript>
+    <div style="color:#888;margin-top:8px">Aktifkan JavaScript untuk melihat daftar liked items.</div>
+  </noscript>
+</section>
+
+
     </main>
 
     <!-- Bottom navigation -->

@@ -135,6 +135,77 @@
 
 })(); // end async IIFE
 
+// ===== Heart (Like) handler: save to localStorage 'likes' =====
+(function(){
+  const heartBtn = document.querySelector('.heart');
+  if (!heartBtn) return;
+
+  // helper localStorage read/write
+  const loadLikes = () => {
+    try { return JSON.parse(localStorage.getItem('likes')||'[]'); } catch(e){ return []; }
+  };
+  const saveLikes = (arr) => localStorage.setItem('likes', JSON.stringify(arr||[]));
+
+  // small toast
+  function miniToast(msg) {
+    let t = document.querySelector('.mini-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.className = 'mini-toast';
+      Object.assign(t.style, {
+        position:'fixed', left:'50%', transform:'translateX(-50%)', bottom:'28px',
+        background:'#111', color:'#fff', padding:'8px 12px', borderRadius:'8px', zIndex:1600, opacity:0, transition:'opacity .18s'
+      });
+      document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.opacity = '1';
+    setTimeout(()=> t.style.opacity = '0', 1300);
+  }
+
+  // build a minimal product object to store
+  function makeLikeObj() {
+    const id = document.querySelector('.product-name')?.dataset?.id || new URLSearchParams(location.search).get('id') || '';
+    const title = document.querySelector('.product-name')?.textContent?.trim() || document.title || '';
+    const imgEl = document.querySelector('.product-image') || document.querySelector('.product-image img');
+    const image = (imgEl && imgEl.tagName && imgEl.tagName.toLowerCase()==='img') ? imgEl.src : (imgEl && imgEl.querySelector && imgEl.querySelector('img')?.src) || '';
+    const price = Number(document.getElementById('product-price')?.dataset?.base || 0);
+    return { id, title, image, price };
+  }
+
+  heartBtn.addEventListener('click', function(e){
+    const pressed = heartBtn.getAttribute('aria-pressed') === 'true';
+    // toggle visual state
+    heartBtn.setAttribute('aria-pressed', String(!pressed));
+
+    // animate a little
+    try { heartBtn.animate([{ transform:'scale(1)'},{ transform:'scale(1.12)'},{ transform:'scale(1)' }], { duration: 220 }); } catch(e){}
+
+    // update localStorage
+    const likes = loadLikes();
+    const obj = makeLikeObj();
+    if (!obj.id) {
+      // fallback: don't store nameless items
+      miniToast('Tidak dapat menyukai item ini');
+      return;
+    }
+
+    const idx = likes.findIndex(x => x.id === obj.id);
+    if (!pressed) {
+      // add
+      if (idx === -1) likes.unshift(obj);
+      saveLikes(likes);
+      miniToast('Ditambahkan ke Liked');
+    } else {
+      // remove
+      if (idx > -1) likes.splice(idx, 1);
+      saveLikes(likes);
+      miniToast('Dihapus dari Liked');
+    }
+
+    // optional: dispatch event so bagfr page can listen (if open in same tab)
+    window.dispatchEvent(new CustomEvent('likes:updated', { detail: { likes } }));
+  });
+})();
 
 // ---- Share menu IIFE (separate, runs after DOM ready because script is at body end) ----
 (function(){
@@ -292,41 +363,46 @@
     setTimeout(()=> t.style.opacity = '0', 1200);
   }
 
-function addToBag(goToBag=true) {
+function addToBag(goToBag = true) {
+  // ambil id/title/price/qty dari halaman
   const id = q('.product-name')?.dataset?.id || new URLSearchParams(location.search).get('id');
-  const title = q('.product-name')?.textContent?.trim() || q('.product-title')?.textContent?.trim() || '';
+  const title = (q('.product-name')?.textContent || q('.product-title')?.textContent || '').trim();
   const base = num(q('#product-price')?.dataset?.base || q('#product-price')?.textContent);
   const qty = Number(q('#quantity')?.value || 1);
+
   if (!id) { console.warn('no product id'); return false; }
+
   const addons = readOptions();
   const pricing = compute(base, qty, addons);
 
-  // --- robust image selection (handles .product-image being <img> or a container)
+  // ambil gambar produk dengan aman (bisa container atau <img>)
   const productImageEl = q('.product-image');
   const imageSrc = (productImageEl && productImageEl.tagName && productImageEl.tagName.toLowerCase() === 'img')
     ? productImageEl.src
     : (q('.product-image img')?.src || '');
 
-  // build item cleanly (one declaration)
+  // objek item final untuk disimpan ke cart
   const item = {
-    id,
-    title,
-    unitPrice: pricing.unit,
-    qty,
-    addons,
-    subtotal: pricing.subtotal,
-    image: imageSrc || ''   // safe fallback empty string
+    id: String(id),
+    title: title,
+    unitPrice: Number(pricing.unit || 0),
+    qty: Number(qty || 1),
+    addons: Array.isArray(addons) ? addons : [],
+    subtotal: Number(pricing.subtotal || 0),
+    image: imageSrc || ''
   };
 
-  // merge into cart (using your merge function)
+  // merge ke cart dan simpan
   let cart = loadCart();
   cart = merge(cart, item);
   saveCart(cart);
 
   toast('Item added to bag');
-  if (goToBag) setTimeout(()=> window.location.href = 'bagfr.html', 450);
+
+  if (goToBag) setTimeout(() => window.location.href = 'bagfr.html', 450);
   return true;
 }
+
 
 
   document.addEventListener('click', e=>{
@@ -393,5 +469,16 @@ function addToBag(goToBag=true) {
     window.location.href = 'order.html?order=' + encodeURIComponent(order.id);
   });
 })();
+const likeObj = {
+  id: productId,
+  title: productTitle,
+  image: productImageSrc,
+  price: Number(productPrice || 0)
+};
+let likes = JSON.parse(localStorage.getItem('likes')||'[]');
+likes.unshift(likeObj); // or push, but ensure no duplicates
+localStorage.setItem('likes', JSON.stringify(likes));
+window.dispatchEvent(new CustomEvent('likes:updated',{detail:{likes}}));
+
 
 })();

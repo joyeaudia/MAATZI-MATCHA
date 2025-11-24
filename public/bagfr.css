@@ -256,9 +256,16 @@ body{
 .gift-title{ margin:0 0 6px 0; font-size:15px; font-weight:700; color:#111; }
 .gift-desc{ margin:0; font-size:13px; color:var(--muted); line-height:1.4; opacity:0.95; }
 .gift-right { flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
-.gift-toggle{ width:22px; height:22px; border-radius:50%; background:transparent; border:2px solid rgba(0,0,0,0.12); cursor:pointer; transition:all .15s ease; }
-.gift-toggle[aria-pressed="true"]{ background: #fff; border-color:#0B84FF; box-shadow: 0 0 0 6px rgba(11,132,255,0.06); }
-
+.gift-toggle{
+  transition: all .2s ease;
+}
+.gift-toggle[aria-pressed="true"]{
+  background: linear-gradient(135deg, #A5C9FF, #0B84FF);
+  border-color: #0B84FF;
+  box-shadow: 0 0 10px rgba(11,132,255,0.4);
+  transform: scale(1.12);
+  transition: all .2s ease;
+}
 /* Summary */
 .summary{ background:transparent; padding:8px 0; }
 .summary .row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
@@ -512,3 +519,122 @@ body{
   overflow: hidden;
   background: #f7f7f7;
 }
+
+/* Simple circular gift toggle (replace existing .gift-toggle rules) */
+.gift-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  display: inline-block;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: all .18s ease;
+  vertical-align: middle;
+}
+
+/* inner visual (optional subtle ring) */
+.gift-toggle::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background .18s ease, transform .18s ease;
+}
+
+/* pressed: fill with gradient + subtle glow */
+.gift-toggle[aria-pressed="true"] {
+  background: linear-gradient(135deg, #1cd6df 0%, #54a0e6 50%, #2183b0 100%);
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 6px 18px rgba(255,150,150,0.12);
+  transform: scale(1.03);
+}
+
+/* pressed inner: optional highlight */
+.gift-toggle[aria-pressed="true"]::after {
+  background: rgba(255,255,255,0.08);
+  transform: scale(0.98);
+}
+
+/* focus/fallback accessibility */
+.gift-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(255,150,150,0.08);
+  border-color: rgba(11,132,255,0.12);
+}
+
+.item-controls .right-col {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+  min-width:92px;
+}
+.item-controls .right-col {
+  margin-top:-6px;   /* angkat seluruh kolom kanan */
+}
+
+
+.like-card {
+  position: relative;
+}
+
+.like-card .like-price {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+.like-card .like-heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.95);
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.like-card { position: relative; overflow: visible; }
+/* default heart = MERAH */
+.like-heart {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f7f7f7; /* merah */
+  color: #eb0a0a;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: transform .12s ease, background .18s ease, color .18s ease;
+  z-index: 20;
+  line-height: 1;
+}
+
+/* ketika ditekan = PUTIH (tak berwarna) */
+.like-heart[aria-pressed="true"],
+.like-heart.like-heart-pressed {
+  background: #ffffff;   /* putih */
+  color: #ff3b30;        /* hati merah outline (optional) */
+  border: 2px solid #ff3b30;
+  transform: scale(0.96);
+}
+ooter style: price + heart aligned horizontally */
+.like-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:0 8px; }
+.like-price.footer-price { font-weight:800; font-size:15px; color:#111; }
+.like-footer .like-heart { margin-left:auto; }

@@ -1,4 +1,4 @@
-/* bag-cart.js - clean, standalone cart renderer + handlers */
+/* bagfr.js - cleaned: cart renderer + single liked renderer with heart button */
 (function () {
   'use strict';
 
@@ -22,7 +22,7 @@
     localStorage.setItem('cart', JSON.stringify(cart||[]));
   }
 
-  // ----- render -----
+  // ----- render cart -----
   function renderCart(){
     const items = loadCart();
     const container = document.getElementById('bag-items') || document.querySelector('.cart-list') || document.querySelector('.bag-items');
@@ -37,28 +37,22 @@
 
     let total = 0;
     items.forEach((it, idx) => {
-      // safe fields & fallbacks
       const unit = Number(it.unitPrice || it.price || 0);
       const qty = Number(it.qty || 1);
       const subtotal = Number(it.subtotal || (unit * qty) || 0);
       total += subtotal;
 
-const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
-  const rawLabel = String(a.label || '').trim();
-  // sederhana: deteksi jika label sudah mengandung indikasi harga seperti "(+10K)" atau "Rp"
-  const hasPriceToken = /\(\s*\+\s*\d+|Rp\b|K\)/i.test(rawLabel);
-  const labelEscaped = escapeHtml(rawLabel);
-  if (hasPriceToken) {
-    // label already has price text — keep as-is (escaped)
-    return `<div class="addon">${labelEscaped}</div>`;
-  } else {
-    // label has no price token — append formatted numeric price if present
-    return `<div class="addon">${labelEscaped}${a.price ? ` (+${formatRupiah(a.price)})` : ''}</div>`;
-  }
-}).join('') : '';
+      const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
+        const rawLabel = String(a.label || '').trim();
+        const hasPriceToken = /\(\s*\+\s*\d+|Rp\b|K\)/i.test(rawLabel);
+        const labelEscaped = escapeHtml(rawLabel);
+        if (hasPriceToken) {
+          return `<div class="addon">${labelEscaped}</div>`;
+        } else {
+          return `<div class="addon">${labelEscaped}${a.price ? ` (+${formatRupiah(a.price)})` : ''}</div>`;
+        }
+      }).join('') : '';
 
-
-      // choose image: prefer it.image, then it.images[0], then placeholder
       const imgSrc = escapeHtml(it.image || (it.images && it.images[0]) || 'assets/placeholder.png');
 
       const html = `
@@ -99,7 +93,6 @@ const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
 
   // ----- update totals -----
   function updateSummaryTotal(precalculated){
-    // if precalculated passed, use it, else compute
     let total = Number(precalculated || 0);
     if (!precalculated){
       const items = loadCart();
@@ -109,17 +102,15 @@ const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
     if (summaryEl) summaryEl.textContent = formatRupiah(total);
   }
 
-  // ----- event delegation: qty, remove -----
+  // ----- event delegation: qty, remove (cart) -----
   document.addEventListener('click', function(e){
-    // find cart-item ancestor
+    // cart item interactions: find cart-item ancestor
     const itemEl = e.target.closest('.cart-item');
-    // if click happened outside any cart item, ignore (some handlers may be global)
     if (!itemEl) return;
 
     const idx = Number(itemEl.dataset.idx);
     let cart = loadCart();
 
-    // qty increase
     if (e.target.closest('.qty-incr')) {
       cart[idx].qty = (Number(cart[idx].qty || 1) + 1);
       cart[idx].subtotal = Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
@@ -128,7 +119,6 @@ const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
       return;
     }
 
-    // qty decrease
     if (e.target.closest('.qty-decr')) {
       cart[idx].qty = Math.max(1, Number(cart[idx].qty || 1) - 1);
       cart[idx].subtotal = Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
@@ -137,24 +127,18 @@ const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
       return;
     }
 
-    // remove (accept button or inner img)
-if (e.target.closest('.remove')) {
-  // langsung hapus tanpa tanya
-  cart.splice(idx, 1);
-  saveCart(cart);
-  renderCart();
-  return;
-}
-
+    if (e.target.closest('.remove')) {
+      cart.splice(idx, 1);
+      saveCart(cart);
+      renderCart();
+      return;
+    }
   });
 
   // ----- public helper to add item to cart (call this from product page) -----
-  // expected productObj example:
-  // { id: 'drink-001', title:'Matcha', unitPrice:55000, qty:1, image:'Dsr/dr4.png', addons:[], subtotal: 55000 }
   function addToBag(productObj){
     if (!productObj || !productObj.id) throw new Error('productObj.id required');
     const cart = loadCart();
-    // check if item with same id + identical addons exists => increase qty
     const sameIdx = cart.findIndex(i => i.id === productObj.id && JSON.stringify(i.addons||[]) === JSON.stringify(productObj.addons||[]));
     if (sameIdx >= 0){
       cart[sameIdx].qty = Number(cart[sameIdx].qty || 1) + (Number(productObj.qty) || 1);
@@ -174,7 +158,6 @@ if (e.target.closest('.remove')) {
       cart.push(item);
     }
     saveCart(cart);
-    // re-render cart UI (if on bag page)
     renderCart();
   }
 
@@ -182,6 +165,120 @@ if (e.target.closest('.remove')) {
   window.addToBag = addToBag;
   window.renderCart = renderCart;
 
-  // initial render on DOM ready
-  document.addEventListener('DOMContentLoaded', renderCart);
+  /* -------------------------
+     LIKES (single clean implementation)
+     ------------------------- */
+
+  function loadLikes(){ try { return JSON.parse(localStorage.getItem('likes')||'[]'); } catch(e){ return []; } }
+  function saveLikes(arr){ localStorage.setItem('likes', JSON.stringify(arr||[])); }
+
+  // Render liked cards: each card has a single heart button
+function renderLikedCards() {
+  const likes = loadLikes();
+  const container = document.querySelector('.liked-row') || document.getElementById('liked-row');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!likes.length) {
+    container.innerHTML = '<div style="color:#888;padding:12px">You have no liked items yet.</div>';
+    return;
+  }
+
+  likes.forEach(it => {
+    const id = String(it.id || '');
+    const title = String(it.title || '');
+    const image = String(it.image || 'assets/placeholder.png');
+    const price = Number(it.price || 0);
+    const priceText = price ? ('Rp ' + new Intl.NumberFormat('id-ID').format(price)) : '';
+
+    const article = document.createElement('article');
+    article.className = 'like-card';
+    article.setAttribute('role','listitem');
+    article.setAttribute('data-id', id);
+    article.innerHTML = `
+      <div class="like-thumb"><img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>
+
+      <div class="like-body">
+        <div class="like-title">${escapeHtml(title)}</div>
+      </div>
+
+      <div class="like-footer">
+        ${priceText ? `<div class="like-price footer-price">${escapeHtml(priceText)}</div>` : ''}
+        <button class="like-heart" aria-label="Unlike" title="Unlike" data-id="${escapeHtml(id)}" aria-pressed="false">❤</button>
+      </div>
+    `;
+    container.appendChild(article);
+  });
+}
+
+
+  // single delegated handler for like-heart + card navigation
+  document.addEventListener('click', function(e){
+    // handle heart (unlike) - prevent navigation when clicking heart
+    const heart = e.target.closest('.like-heart');
+    if (heart) {
+      // visual pressed state
+      heart.setAttribute('aria-pressed', 'true');
+      heart.classList.add('like-heart-pressed');
+
+      const id = heart.dataset.id;
+      if (id) {
+        // short delay so user sees color change
+        setTimeout(() => {
+          let likes = loadLikes();
+          likes = likes.filter(x => String(x.id) !== String(id));
+          saveLikes(likes);
+          renderLikedCards();
+          window.dispatchEvent(new CustomEvent('likes:updated', { detail: { likes } }));
+        }, 180);
+      } else {
+        setTimeout(renderLikedCards, 180);
+      }
+      e.stopPropagation();
+      return;
+    }
+
+    // navigate to product page when clicking card body
+const card = e.target.closest('.like-card');
+if (card) {
+  // prefer explicit data-id attribute
+  let id = card.getAttribute('data-id') || card.dataset.id || null;
+
+  // fallback: try to resolve id from likes storage by matching title or image
+  if (!id) {
+    try {
+      const likes = JSON.parse(localStorage.getItem('likes')||'[]');
+      const title = card.querySelector('.like-title')?.textContent?.trim();
+      const img = card.querySelector('.like-thumb img')?.src;
+      const found = likes.find(x => (x.title && x.title === title) || (x.image && x.image === img));
+      if (found && found.id) id = found.id;
+    } catch(err){
+      // ignore parse errors
+    }
+  }
+
+  console.log('Navigating to product, resolved id =', id);
+
+  if (!id) {
+    // avoid opening template without id; notify user
+    alert('Tidak dapat menemukan id produk untuk kartu ini.');
+    return;
+  }
+
+  // navigate to product page with explicit id
+  const target = `./drsi.html?id=${encodeURIComponent(String(id))}`;
+  window.location.assign(target);
+}
+
+  });
+
+  // Initialize renders on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function(){
+    renderCart();
+    renderLikedCards();
+  });
+
+  // allow other parts to request re-render
+  window.addEventListener('likes:updated', renderLikedCards);
+
 })();
