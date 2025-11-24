@@ -292,27 +292,42 @@
     setTimeout(()=> t.style.opacity = '0', 1200);
   }
 
-  function addToBag(goToBag=true) {
-    const id = q('.product-name')?.dataset?.id || new URLSearchParams(location.search).get('id');
-    const title = q('.product-name')?.textContent?.trim() || q('.product-title')?.textContent?.trim() || '';
-    const base = num(q('#product-price')?.dataset?.base || q('#product-price')?.textContent);
-    const qty = Number(q('#quantity')?.value || 1);
-    if (!id) { console.warn('no product id'); return false; }
-    const addons = readOptions();
-    const pricing = compute(base, qty, addons);
-    const item = {
-      id, title,
-      unitPrice: pricing.unit,
-      qty,
-      addons,
-      subtotal: pricing.subtotal,
-      image: q('.product-image img')?.src || ''
-    };
-    let cart = loadCart(); cart = merge(cart, item); saveCart(cart);
-    toast('Item added to bag');
-    if (goToBag) setTimeout(()=> window.location.href = 'bagfr.html', 450);
-    return true;
-  }
+function addToBag(goToBag=true) {
+  const id = q('.product-name')?.dataset?.id || new URLSearchParams(location.search).get('id');
+  const title = q('.product-name')?.textContent?.trim() || q('.product-title')?.textContent?.trim() || '';
+  const base = num(q('#product-price')?.dataset?.base || q('#product-price')?.textContent);
+  const qty = Number(q('#quantity')?.value || 1);
+  if (!id) { console.warn('no product id'); return false; }
+  const addons = readOptions();
+  const pricing = compute(base, qty, addons);
+
+  // --- robust image selection (handles .product-image being <img> or a container)
+  const productImageEl = q('.product-image');
+  const imageSrc = (productImageEl && productImageEl.tagName && productImageEl.tagName.toLowerCase() === 'img')
+    ? productImageEl.src
+    : (q('.product-image img')?.src || '');
+
+  // build item cleanly (one declaration)
+  const item = {
+    id,
+    title,
+    unitPrice: pricing.unit,
+    qty,
+    addons,
+    subtotal: pricing.subtotal,
+    image: imageSrc || ''   // safe fallback empty string
+  };
+
+  // merge into cart (using your merge function)
+  let cart = loadCart();
+  cart = merge(cart, item);
+  saveCart(cart);
+
+  toast('Item added to bag');
+  if (goToBag) setTimeout(()=> window.location.href = 'bagfr.html', 450);
+  return true;
+}
+
 
   document.addEventListener('click', e=>{
     const btn = e.target.closest && e.target.closest('.add-btn, [data-add-to-bag]');

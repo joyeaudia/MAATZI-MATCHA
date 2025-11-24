@@ -459,4 +459,46 @@ body{
 .appbar { background: transparent; pointer-events: none; }
 .appbar .appbar-inner { pointer-events: auto; } /* allow clicks inside */
 
+/* ----- kecilkan thumbnail cart (safe) ----- */
+/* wrapper */
+.cart-item .thumb,
+.cart-item .cart-thumb {
+  width: 72px;            /* ukuran thumbnail di cart (ubah 72 -> 64/56 jika mau lebih kecil) */
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 0 0 72px;        /* tetap ambil ruang 72px di layout flex */
+  display: block;
+  background: #fafafa;
+  box-shadow: none;
+}
 
+/* image inside wrapper */
+.cart-item .thumb img,
+.cart-item .cart-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      /* isi kotak tanpa mendistorsi */
+  display: block;
+}
+
+/* jika markup mu saat ini hanya <img class="thumb">, juga tutupi itu */
+.cart-item img.thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* responsive tweak untuk layar kecil */
+@media (max-width:420px) {
+  .cart-item .thumb, .cart-item .cart-thumb, .cart-item img.thumb {
+    width: 64px;
+    height: 64px;
+    flex: 0 0 64px;
+  }
+}
+
+.cart-item .thumb {
+  margin-top: 20px;   /* 🠶 ubah angka ini (6px → 8px, 12px, dll) */
+}

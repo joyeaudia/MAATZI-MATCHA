@@ -1,232 +1,175 @@
-// app.js
+/* bag-cart.js - clean, standalone cart renderer + handlers */
 (function () {
   'use strict';
 
-  // format number to Rupiah string "Rp 150.000"
-  function formatRupiah(num) {
+  // ----- helpers -----
+  const q = s => document.querySelector(s);
+  const qa = s => Array.from(document.querySelectorAll(s));
+
+  function formatRupiah(num){
     num = Math.round(Number(num) || 0);
     return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
-  // update subtotal for one cart-item element
-  function updateItemSubtotal(itemEl) {
-    const price = parseInt(itemEl.dataset.price, 10) || 0;
-    const qty = parseInt(itemEl.querySelector('.qty').textContent, 10) || 0;
-    const subtotal = price * qty;
-    const displayEl = itemEl.querySelector('.item-sub-value');
-    if (displayEl) displayEl.textContent = formatRupiah(subtotal);
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
 
-    // keep unit price in item-meta consistent
-    const meta = itemEl.querySelector('.item-meta');
-    if (meta) {
-      meta.textContent = meta.textContent.replace(/Rp\s?[\d\.]+/, formatRupiah(price));
-    }
+  // ----- storage -----
+  function loadCart(){
+    try { return JSON.parse(localStorage.getItem('cart')||'[]'); }
+    catch(e){ return []; }
+  }
+  function saveCart(cart){
+    localStorage.setItem('cart', JSON.stringify(cart||[]));
   }
 
-  // recalculate total for summary
-  function updateSummaryTotal() {
-    const items = document.querySelectorAll('.cart-item');
+  // ----- render -----
+  function renderCart(){
+    const items = loadCart();
+    const container = document.getElementById('bag-items') || document.querySelector('.cart-list') || document.querySelector('.bag-items');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!items.length){
+      container.innerHTML = '<p class="empty" style="text-align:center;color:#666;padding:18px 0">Keranjang kosong.</p>';
+      updateSummaryTotal();
+      return;
+    }
+
     let total = 0;
-    items.forEach(it => {
-      const price = parseInt(it.dataset.price, 10) || 0;
-      const qty = parseInt(it.querySelector('.qty').textContent, 10) || 0;
-      total += price * qty;
+    items.forEach((it, idx) => {
+      // safe fields & fallbacks
+      const unit = Number(it.unitPrice || it.price || 0);
+      const qty = Number(it.qty || 1);
+      const subtotal = Number(it.subtotal || (unit * qty) || 0);
+      total += subtotal;
+
+      const addonsHtml = (it.addons && it.addons.length)
+        ? it.addons.map(a => `<div class="addon">${escapeHtml(a.label || '')} ${a.price ? `(+${formatRupiah(a.price)})` : ''}</div>`).join('')
+        : '';
+
+      // choose image: prefer it.image, then it.images[0], then placeholder
+      const imgSrc = escapeHtml(it.image || (it.images && it.images[0]) || 'assets/placeholder.png');
+
+      const html = `
+        <article class="cart-item" data-idx="${idx}" data-price="${unit}">
+          <div class="thumb"><img src="${imgSrc}" alt="${escapeHtml(it.title||'Product')}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>
+          <div class="item-body">
+            <div class="item-head">
+              <div>
+                <div class="item-title">${escapeHtml(it.title||'Untitled')}</div>
+                <div class="item-meta">${addonsHtml}</div>
+              </div>
+              <button class="remove" title="Hapus item" aria-label="Hapus item" data-idx="${idx}">
+                <img src="acs/smph.png" alt="Hapus">
+              </button>
+            </div>
+
+            <div class="item-controls">
+              <div class="qty-control">
+                <button class="qty-btn qty-decr" aria-label="Kurangi">-</button>
+                <span class="qty">${qty}</span>
+                <button class="qty-btn qty-incr" aria-label="Tambah">+</button>
+              </div>
+
+              <div class="right-col">
+                <div class="item-sub-value">${formatRupiah(subtotal)}</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html.trim();
+      container.appendChild(wrapper.firstElementChild);
     });
-    const summaryEl = document.querySelector('.summary-value');
+
+    updateSummaryTotal(total);
+  }
+
+  // ----- update totals -----
+  function updateSummaryTotal(precalculated){
+    // if precalculated passed, use it, else compute
+    let total = Number(precalculated || 0);
+    if (!precalculated){
+      const items = loadCart();
+      total = items.reduce((s,it) => s + (Number(it.subtotal) || (Number(it.unitPrice||it.price||0) * Number(it.qty||1)) ), 0);
+    }
+    const summaryEl = document.querySelector('.summary-value') || document.getElementById('bag-total') || document.querySelector('.bag-total');
     if (summaryEl) summaryEl.textContent = formatRupiah(total);
   }
 
-  // attach handlers to a single cart item
-  function initCartItem(itemEl) {
-    const inc = itemEl.querySelector('.qty-increase');
-    const dec = itemEl.querySelector('.qty-decrease');
-    const qtyEl = itemEl.querySelector('.qty');
-
-    // ensure qty exists
-    if (!qtyEl) return;
-
-    // ensure initial subtotal displays correctly
-    updateItemSubtotal(itemEl);
-
-    if (inc) {
-      inc.addEventListener('click', () => {
-        let q = parseInt(qtyEl.textContent, 10) || 0;
-        q = q + 1;
-        qtyEl.textContent = q;
-        updateItemSubtotal(itemEl);
-        updateSummaryTotal();
-      });
-    }
-
-    if (dec) {
-      dec.addEventListener('click', () => {
-        let q = parseInt(qtyEl.textContent, 10) || 0;
-        if (q > 1) {
-          q = q - 1;
-          qtyEl.textContent = q;
-          updateItemSubtotal(itemEl);
-          updateSummaryTotal();
-        }
-      });
-    }
-
-    const rm = itemEl.querySelector('.remove');
-    if (rm) {
-      rm.addEventListener('click', () => {
-        if (confirm('Hapus item dari keranjang?')) {
-          itemEl.remove();
-          updateSummaryTotal();
-        }
-      });
-    }
-  }
-
-  // init like-heart toggles
-  function initLikeHearts() {
-    document.querySelectorAll('.like-heart').forEach(btn => {
-      if (!btn.hasAttribute('aria-pressed')) btn.setAttribute('aria-pressed', 'false');
-
-      btn.addEventListener('click', () => {
-        const pressed = btn.getAttribute('aria-pressed') === 'true';
-        btn.setAttribute('aria-pressed', String(!pressed));
-
-        btn.animate([
-          { transform: 'scale(1)' },
-          { transform: 'scale(1.12)' },
-          { transform: 'scale(1)' }
-        ], {
-          duration: 220,
-          easing: 'cubic-bezier(.2,.8,.2,1)'
-        });
-      });
-
-      btn.addEventListener('keydown', (ev) => {
-        if (ev.key === ' ' || ev.key === 'Enter') {
-          ev.preventDefault();
-          btn.click();
-        }
-      });
-    });
-  }
-
-  // gift toggle small handler
-  function initGiftToggle() {
-    const g = document.querySelector('.gift-toggle');
-    if (!g) return;
-    if (!g.hasAttribute('aria-pressed')) g.setAttribute('aria-pressed', 'false');
-
-    g.addEventListener('click', () => {
-      const pressed = g.getAttribute('aria-pressed') === 'true';
-      g.setAttribute('aria-pressed', String(!pressed));
-    });
-  }
-
-  // on DOM ready
-  document.addEventListener('DOMContentLoaded', () => {
-    // initialize cart items
-    document.querySelectorAll('.cart-item').forEach(initCartItem);
-
-    // initial total
-    updateSummaryTotal();
-
-    // like hearts
-    initLikeHearts();
-
-    // gift toggle
-    initGiftToggle();
-  });
-  // === RENDER CART (paste into bagfr.js) ===
-(function(){
-  const q = s => document.querySelector(s);
-  const qa = s => Array.from(document.querySelectorAll(s));
-  const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0));
-  function loadCart(){ try{return JSON.parse(localStorage.getItem('cart')||'[]')}catch(e){return []} }
-
-// REPLACE renderCart() with this version
-function renderCart() {
-  const items = loadCart();
-  const container = document.getElementById('bag-items') || document.querySelector('.bag-items') || document.querySelector('.cart-list');
-  if (!container) return;
-  container.innerHTML = '';
-
-  if (!items.length) {
-    container.innerHTML = '<p class="empty" style="text-align:center;color:#666;padding:18px 0">Keranjang kosong.</p>';
-    const totalEl = document.getElementById('bag-total') || document.querySelector('.bag-total');
-    if (totalEl) totalEl.textContent = fmt(0);
-    return;
-  }
-
-  let total = 0;
-  items.forEach((it, idx) => {
-    total += Number(it.subtotal || 0);
-    const addonText = (it.addons || []).map(a => `${a.label} (+${fmt(a.price)})`).join('<br>');
-    const html = `
-      <article class="cart-item" data-idx="${idx}" data-price="${Number(it.unitPrice||it.price||0)}">
-        <img class="thumb" src="${it.image||''}" alt="${it.title||''}">
-        <div class="item-body">
-          <div class="item-head">
-            <div>
-              <div class="item-title">${it.title}</div>
-              <div class="item-meta">${addonText}</div>
-            </div>
-            <!-- remove goes in item-head but visually we will place it above subtotal using CSS -->
-         <button class="remove-item remove" ...>
-  <img class="remove-icon" src="acs/smph.png" />
-</button>
-
-          </div>
-
-          <div class="item-controls">
-            <div class="qty-control">
-              <button class="qty-btn qty-decr" aria-label="Kurangi">-</button>
-              <span class="qty">${it.qty}</span>
-              <button class="qty-btn qty-incr" aria-label="Tambah">+</button>
-            </div>
-
-            <div class="right-col">
-              <div class="item-sub">${fmt(it.subtotal)}</div>
-            </div>
-          </div>
-        </div>
-      </article>
-    `;
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html.trim();
-    container.appendChild(wrapper.firstElementChild);
-  });
-
-  const totalEl = document.getElementById('bag-total') || document.querySelector('.bag-total');
-  if (totalEl) totalEl.textContent = fmt(total);
-}
-
-
-  // qty + remove handlers
+  // ----- event delegation: qty, remove -----
   document.addEventListener('click', function(e){
+    // find cart-item ancestor
     const itemEl = e.target.closest('.cart-item');
+    // if click happened outside any cart item, ignore (some handlers may be global)
     if (!itemEl) return;
+
     const idx = Number(itemEl.dataset.idx);
     let cart = loadCart();
-    if (e.target.matches('.qty-incr')) {
-      cart[idx].qty = Number(cart[idx].qty||1) + 1;
-      cart[idx].subtotal = Number(cart[idx].unitPrice||0) * cart[idx].qty;
-      localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); return;
-    }
-    if (e.target.matches('.qty-decr')) {
-      cart[idx].qty = Math.max(1, Number(cart[idx].qty||1) - 1);
-      cart[idx].subtotal = Number(cart[idx].unitPrice||0) * cart[idx].qty;
-      localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); return;
-    }
-   if (e.target.matches('.remove-item') || e.target.closest('.remove-icon')) {
-  cart.splice(idx,1);
-  localStorage.setItem('cart', JSON.stringify(cart));
-  renderCart();
-  return;
-}
 
+    // qty increase
+    if (e.target.closest('.qty-incr')) {
+      cart[idx].qty = (Number(cart[idx].qty || 1) + 1);
+      cart[idx].subtotal = Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
+      saveCart(cart);
+      renderCart();
+      return;
+    }
+
+    // qty decrease
+    if (e.target.closest('.qty-decr')) {
+      cart[idx].qty = Math.max(1, Number(cart[idx].qty || 1) - 1);
+      cart[idx].subtotal = Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
+      saveCart(cart);
+      renderCart();
+      return;
+    }
+
+    // remove (accept button or inner img)
+    if (e.target.closest('.remove')) {
+      if (!confirm('Hapus item dari keranjang?')) return;
+      cart.splice(idx, 1);
+      saveCart(cart);
+      renderCart();
+      return;
+    }
   });
 
-  // initial render
-  document.addEventListener('DOMContentLoaded', renderCart);
+  // ----- public helper to add item to cart (call this from product page) -----
+  // expected productObj example:
+  // { id: 'drink-001', title:'Matcha', unitPrice:55000, qty:1, image:'Dsr/dr4.png', addons:[], subtotal: 55000 }
+  function addToBag(productObj){
+    if (!productObj || !productObj.id) throw new Error('productObj.id required');
+    const cart = loadCart();
+    // check if item with same id + identical addons exists => increase qty
+    const sameIdx = cart.findIndex(i => i.id === productObj.id && JSON.stringify(i.addons||[]) === JSON.stringify(productObj.addons||[]));
+    if (sameIdx >= 0){
+      cart[sameIdx].qty = Number(cart[sameIdx].qty || 1) + (Number(productObj.qty) || 1);
+      cart[sameIdx].subtotal = Number(cart[sameIdx].unitPrice || cart[sameIdx].price || 0) * cart[sameIdx].qty;
+    } else {
+      const qty = Number(productObj.qty||1);
+      const unit = Number(productObj.unitPrice || productObj.price || 0);
+      const item = {
+        id: productObj.id,
+        title: productObj.title || '',
+        unitPrice: unit,
+        qty: qty,
+        subtotal: Number(productObj.subtotal || (unit * qty)),
+        image: productObj.image || (productObj.images && productObj.images[0]) || 'assets/placeholder.png',
+        addons: productObj.addons || []
+      };
+      cart.push(item);
+    }
+    saveCart(cart);
+    // re-render cart UI (if on bag page)
+    renderCart();
+  }
+
+  // expose addToBag globally so product pages can call it
+  window.addToBag = addToBag;
   window.renderCart = renderCart;
-})();
+
+  // initial render on DOM ready
+  document.addEventListener('DOMContentLoaded', renderCart);
 })();
