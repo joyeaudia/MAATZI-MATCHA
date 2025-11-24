@@ -142,52 +142,63 @@
   const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0));
   function loadCart(){ try{return JSON.parse(localStorage.getItem('cart')||'[]')}catch(e){return []} }
 
-  function renderCart() {
-    const items = loadCart();
-    const container = document.getElementById('bag-items') || document.querySelector('.bag-items') || q('.cart-list');
-    if (!container) return;
-    container.innerHTML = '';
-    if (!items.length) {
-      container.innerHTML = '<p class="empty">Your bag is empty.</p>';
-      const totalEl = q('#bag-total') || q('.bag-total');
-      if (totalEl) totalEl.textContent = fmt(0);
-      return;
-    }
-    let total = 0;
-    items.forEach((it, idx) => {
-      total += Number(it.subtotal || 0);
-      const addonText = (it.addons||[]).map(a=>`${a.label} (+${fmt(a.price)})`).join('<br>');
-      const itemHtml = `
-        <div class="cart-item" data-idx="${idx}">
-          <img src="${it.image||''}" alt="${it.title||''}" class="cart-thumb" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-right:12px;">
-          <div class="cart-meta" style="flex:1">
-            <div class="cart-title" style="font-weight:600">${it.title}</div>
-            <div class="cart-addons" style="font-size:13px;color:#666">${addonText}</div>
-            <div class="cart-qty" style="margin-top:6px;">
-              <button class="qty-decr">-</button>
-              <span class="qty-val" style="margin:0 8px">${it.qty}</span>
-              <button class="qty-incr">+</button>
+// REPLACE renderCart() with this version
+function renderCart() {
+  const items = loadCart();
+  const container = document.getElementById('bag-items') || document.querySelector('.bag-items') || document.querySelector('.cart-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!items.length) {
+    container.innerHTML = '<p class="empty" style="text-align:center;color:#666;padding:18px 0">Keranjang kosong.</p>';
+    const totalEl = document.getElementById('bag-total') || document.querySelector('.bag-total');
+    if (totalEl) totalEl.textContent = fmt(0);
+    return;
+  }
+
+  let total = 0;
+  items.forEach((it, idx) => {
+    total += Number(it.subtotal || 0);
+    const addonText = (it.addons || []).map(a => `${a.label} (+${fmt(a.price)})`).join('<br>');
+    const html = `
+      <article class="cart-item" data-idx="${idx}" data-price="${Number(it.unitPrice||it.price||0)}">
+        <img class="thumb" src="${it.image||''}" alt="${it.title||''}">
+        <div class="item-body">
+          <div class="item-head">
+            <div>
+              <div class="item-title">${it.title}</div>
+              <div class="item-meta">${addonText}</div>
+            </div>
+            <!-- remove goes in item-head but visually we will place it above subtotal using CSS -->
+         <button class="remove-item remove" ...>
+  <img class="remove-icon" src="acs/smph.png" />
+</button>
+
+          </div>
+
+          <div class="item-controls">
+            <div class="qty-control">
+              <button class="qty-btn qty-decr" aria-label="Kurangi">-</button>
+              <span class="qty">${it.qty}</span>
+              <button class="qty-btn qty-incr" aria-label="Tambah">+</button>
+            </div>
+
+            <div class="right-col">
+              <div class="item-sub">${fmt(it.subtotal)}</div>
             </div>
           </div>
-          <div class="cart-price" style="min-width:96px;text-align:right">${fmt(it.subtotal)}</div>
-          <!-- remove icon placed visually above price -->
-<img src="acs/smph.png"
-     alt="Remove"
-     class="remove-icon"
-     title="Remove item"
-     style="width:24px;height:24px;cursor:pointer;margin-left:8px" />
         </div>
-      `;
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = itemHtml;
-      const el = wrapper.firstElementChild;
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      container.appendChild(el);
-    });
-    const totalEl = q('#bag-total') || q('.bag-total');
-    if (totalEl) totalEl.textContent = fmt(total);
-  }
+      </article>
+    `;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    container.appendChild(wrapper.firstElementChild);
+  });
+
+  const totalEl = document.getElementById('bag-total') || document.querySelector('.bag-total');
+  if (totalEl) totalEl.textContent = fmt(total);
+}
+
 
   // qty + remove handlers
   document.addEventListener('click', function(e){
