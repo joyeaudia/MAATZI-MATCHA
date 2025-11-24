@@ -392,3 +392,20 @@ body{
   .page-title{ font-size:16px; }
   :root{ --nav-h:70px; }
 }
+.by-logo {
+    width: 90px;
+    height: 16px; /* gak masalah, nanti kita override */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) scale(2.4); /* 🔥 INI yang membuatnya besar TANPA merusak bar */
+    transform-origin: center top; /* supaya membesar ke bawah */
+    pointer-events: none; /* optional: biar tidak ke-klik */
+}
+
+/* Header bar tetap */
+.topbar {
+    height: 40px; /* bar tetap kecil */
+    position: relative;
+    overflow: visible !important; /* gambar boleh keluar! */
+}
+
