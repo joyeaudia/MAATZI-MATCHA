@@ -135,4 +135,87 @@
     // gift toggle
     initGiftToggle();
   });
+  // === RENDER CART (paste into bagfr.js) ===
+(function(){
+  const q = s => document.querySelector(s);
+  const qa = s => Array.from(document.querySelectorAll(s));
+  const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0));
+  function loadCart(){ try{return JSON.parse(localStorage.getItem('cart')||'[]')}catch(e){return []} }
+
+  function renderCart() {
+    const items = loadCart();
+    const container = document.getElementById('bag-items') || document.querySelector('.bag-items') || q('.cart-list');
+    if (!container) return;
+    container.innerHTML = '';
+    if (!items.length) {
+      container.innerHTML = '<p class="empty">Your bag is empty.</p>';
+      const totalEl = q('#bag-total') || q('.bag-total');
+      if (totalEl) totalEl.textContent = fmt(0);
+      return;
+    }
+    let total = 0;
+    items.forEach((it, idx) => {
+      total += Number(it.subtotal || 0);
+      const addonText = (it.addons||[]).map(a=>`${a.label} (+${fmt(a.price)})`).join('<br>');
+      const itemHtml = `
+        <div class="cart-item" data-idx="${idx}">
+          <img src="${it.image||''}" alt="${it.title||''}" class="cart-thumb" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-right:12px;">
+          <div class="cart-meta" style="flex:1">
+            <div class="cart-title" style="font-weight:600">${it.title}</div>
+            <div class="cart-addons" style="font-size:13px;color:#666">${addonText}</div>
+            <div class="cart-qty" style="margin-top:6px;">
+              <button class="qty-decr">-</button>
+              <span class="qty-val" style="margin:0 8px">${it.qty}</span>
+              <button class="qty-incr">+</button>
+            </div>
+          </div>
+          <div class="cart-price" style="min-width:96px;text-align:right">${fmt(it.subtotal)}</div>
+          <!-- remove icon placed visually above price -->
+<img src="acs/smph.png"
+     alt="Remove"
+     class="remove-icon"
+     title="Remove item"
+     style="width:24px;height:24px;cursor:pointer;margin-left:8px" />
+        </div>
+      `;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = itemHtml;
+      const el = wrapper.firstElementChild;
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      container.appendChild(el);
+    });
+    const totalEl = q('#bag-total') || q('.bag-total');
+    if (totalEl) totalEl.textContent = fmt(total);
+  }
+
+  // qty + remove handlers
+  document.addEventListener('click', function(e){
+    const itemEl = e.target.closest('.cart-item');
+    if (!itemEl) return;
+    const idx = Number(itemEl.dataset.idx);
+    let cart = loadCart();
+    if (e.target.matches('.qty-incr')) {
+      cart[idx].qty = Number(cart[idx].qty||1) + 1;
+      cart[idx].subtotal = Number(cart[idx].unitPrice||0) * cart[idx].qty;
+      localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); return;
+    }
+    if (e.target.matches('.qty-decr')) {
+      cart[idx].qty = Math.max(1, Number(cart[idx].qty||1) - 1);
+      cart[idx].subtotal = Number(cart[idx].unitPrice||0) * cart[idx].qty;
+      localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); return;
+    }
+   if (e.target.matches('.remove-item') || e.target.closest('.remove-icon')) {
+  cart.splice(idx,1);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+  return;
+}
+
+  });
+
+  // initial render
+  document.addEventListener('DOMContentLoaded', renderCart);
+  window.renderCart = renderCart;
+})();
 })();

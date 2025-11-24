@@ -510,3 +510,17 @@ body{
   }
   .like-heart{ top: 8px; right: 10px; width:32px; height:32px; }
 }
+.cart-item { display:flex; align-items:flex-start; gap:12px; position:relative; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+.cart-thumb { width:72px; height:72px; object-fit:cover; border-radius:8px; }
+.cart-price { font-weight:700; }
+.remove-icon {
+  width:22px;
+  height:22px;
+  cursor:pointer;
+  margin-top:-8px; /* naik sedikit di atas price */
+  display:inline-block;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+  transition: transform .12s ease;
+}
+.remove-icon:hover { transform: translateY(-3px) scale(1.02); }
+

@@ -218,4 +218,165 @@
     if (!shareMenu.contains(ev.target) && ev.target !== shareBtn) hideMenu();
   });
 
+// === ADD TO BAG (paste at end of product page JS) ===
+(function(){
+  const q = s => document.querySelector(s);
+  const qa = s => Array.from(document.querySelectorAll(s));
+  const num = v => Number(String(v||0).replace(/[^\d]/g,'')) || 0;
+
+  function readOptions() {
+    const addons = [];
+    // button-style
+    qa('.option-group button[aria-pressed="true"]').forEach(btn=>{
+      const id = btn.dataset.choiceId || btn.dataset.id || btn.getAttribute('data-id') || btn.textContent.trim();
+      const label = btn.dataset.label || btn.textContent.trim();
+      const price = num(btn.dataset.price ?? btn.dataset.priceDelta ?? btn.getAttribute('data-price-delta'));
+      addons.push({ id: String(id).replace(/_/g,'-'), label, price });
+    });
+    // inputs/selects
+    const cont = document.getElementById('product-options');
+    if (cont) {
+      cont.querySelectorAll('input').forEach(inp=>{
+        if (inp.disabled) return;
+        if ((inp.type==='checkbox' && inp.checked) || (inp.type==='radio' && inp.checked)) {
+          const id = inp.dataset.choiceId || inp.id || (inp.name + '_' + inp.value);
+          const label = inp.dataset.label || cont.querySelector(`label[for="${inp.id}"]`)?.textContent?.trim() || id;
+          const price = num(inp.dataset.price || inp.getAttribute('data-price') || 0);
+          addons.push({ id: String(id).replace(/_/g,'-'), label: label.trim(), price });
+        }
+      });
+      cont.querySelectorAll('select').forEach(sel=>{
+        const opt = sel.options[sel.selectedIndex];
+        if (opt && !opt.disabled) {
+          const price = num(opt.dataset.price || opt.getAttribute('data-price') || 0);
+          addons.push({ id: sel.name + '_' + opt.value, label: opt.text || opt.value, price });
+        }
+      });
+    }
+    return addons;
+  }
+
+  function compute(base, qty, addons){
+    const addTotal = (addons||[]).reduce((s,a)=>s + Number(a.price||0), 0);
+    const unit = Number(base||0) + addTotal;
+    return { unit, subtotal: unit * Math.max(1, Number(qty||1)), addTotal };
+  }
+
+  function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){return []} }
+  function saveCart(c){ localStorage.setItem('cart', JSON.stringify(c||[])); }
+
+  function merge(cart, item){
+    const sig = it => (it.addons||[]).map(a=>a.id).sort().join('|');
+    const s = sig(item);
+    for (let i=0;i<cart.length;i++){
+      if (cart[i].id === item.id && sig(cart[i]) === s) {
+        cart[i].qty = Number(cart[i].qty || 1) + Number(item.qty || 1);
+        cart[i].subtotal = Number(cart[i].subtotal || 0) + Number(item.subtotal || 0);
+        return cart;
+      }
+    }
+    cart.push(item);
+    return cart;
+  }
+
+  function toast(msg='Added to bag') {
+    let t = document.querySelector('.mini-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.className = 'mini-toast';
+      t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:#111;color:#fff;padding:8px 12px;border-radius:8px;z-index:1600;opacity:0;transition:opacity .18s';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    setTimeout(()=> t.style.opacity = '0', 1200);
+  }
+
+  function addToBag(goToBag=true) {
+    const id = q('.product-name')?.dataset?.id || new URLSearchParams(location.search).get('id');
+    const title = q('.product-name')?.textContent?.trim() || q('.product-title')?.textContent?.trim() || '';
+    const base = num(q('#product-price')?.dataset?.base || q('#product-price')?.textContent);
+    const qty = Number(q('#quantity')?.value || 1);
+    if (!id) { console.warn('no product id'); return false; }
+    const addons = readOptions();
+    const pricing = compute(base, qty, addons);
+    const item = {
+      id, title,
+      unitPrice: pricing.unit,
+      qty,
+      addons,
+      subtotal: pricing.subtotal,
+      image: q('.product-image img')?.src || ''
+    };
+    let cart = loadCart(); cart = merge(cart, item); saveCart(cart);
+    toast('Item added to bag');
+    if (goToBag) setTimeout(()=> window.location.href = 'bagfr.html', 450);
+    return true;
+  }
+
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest && e.target.closest('.add-btn, [data-add-to-bag]');
+    if (!btn) return;
+    e.preventDefault();
+    const noRedirect = btn.hasAttribute('data-no-redirect');
+    addToBag(!noRedirect ? true : false);
+  });
+
+  window.addToBagFromPage = addToBag;
+})();
+// === CHECKOUT -> ORDER + WA (paste into bagfr.js) ===
+(function(){
+  const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0));
+  function loadCart(){ try{return JSON.parse(localStorage.getItem('cart')||'[]')}catch(e){return []} }
+  function saveOrders(arr){ localStorage.setItem('orders', JSON.stringify(arr||[])); }
+  function loadOrders(){ try{return JSON.parse(localStorage.getItem('orders')||'[]')}catch(e){return []} }
+  function genId(){ return 'ORD-' + new Date().toISOString().slice(0,10) + '-' + Math.random().toString(36).slice(2,6); }
+
+  function buildMsg(order){
+    const lines = [];
+    lines.push(`📦 New Order — ${order.id}`);
+    lines.push(`Waktu: ${new Date(order.createdAt).toLocaleString('id-ID')}`);
+    lines.push('');
+    order.items.forEach(it=>{
+      const addon = (it.addons || []).map(a=>`${a.label} (+${fmt(a.price)})`).join(', ');
+      lines.push(`• ${it.title} x${it.qty} — ${fmt(it.unitPrice)} ${addon? ' | '+addon : ''} = ${fmt(it.subtotal)}`);
+    });
+    lines.push('');
+    lines.push(`Total: ${fmt(order.total)}`);
+    lines.push('');
+    lines.push('Nama:');
+    lines.push('No. HP:');
+    lines.push('Alamat / Catatan:');
+    lines.push('');
+    lines.push('Mohon konfirmasi ketersediaan & instruksi pembayaran via chat. Terima kasih!');
+    return lines.join('\n');
+  }
+
+  document.addEventListener('click', function(e){
+    if (!e.target.closest) return;
+    const btn = e.target.closest('.checkout, [data-checkout]');
+    if (!btn) return;
+    e.preventDefault();
+    const cart = loadCart();
+    if (!cart.length) { alert('Keranjang kosong'); return; }
+    // compute order
+    let total=0;
+    const items = cart.map(it=>{
+      total += Number(it.subtotal||0);
+      return {
+        id: it.id, title: it.title, qty: it.qty, unitPrice: it.unitPrice, addons: it.addons || [], subtotal: it.subtotal
+      };
+    });
+    const order = { id: genId(), createdAt: Date.now(), status: 'active', items, total };
+    const orders = loadOrders(); orders.unshift(order); saveOrders(orders);
+
+    // WA open
+    const waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(buildMsg(order));
+    window.open(waUrl, '_blank');
+
+    // redirect to order page
+    window.location.href = 'order.html?order=' + encodeURIComponent(order.id);
+  });
+})();
+
 })();
