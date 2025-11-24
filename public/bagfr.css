@@ -393,19 +393,70 @@ body{
   :root{ --nav-h:70px; }
 }
 .by-logo {
-    width: 90px;
-    height: 16px; /* gak masalah, nanti kita override */
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%) scale(2.4); /* 🔥 INI yang membuatnya besar TANPA merusak bar */
-    transform-origin: center top; /* supaya membesar ke bawah */
-    pointer-events: none; /* optional: biar tidak ke-klik */
+  position: absolute !important;
+  left: 50%;
+  top: -50px;                 /* 🔥 ATUR INI BUAT NAIKIN */
+  transform: translateX(-50%);
+  transform-origin: center top;
+  width: 130px;
+  height: auto;
+  z-index: 2000;
+  pointer-events: none;
 }
+
+
 
 /* Header bar tetap */
 .topbar {
-    height: 40px; /* bar tetap kecil */
-    position: relative;
-    overflow: visible !important; /* gambar boleh keluar! */
+    background: transparent;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    box-shadow: none;
 }
+
+/* ===== Header: fixed top, centered logo, bell at right ===== */
+
+/* --- make inner header visually gone but keep layout --- */
+.appbar-inner {
+  position: relative;
+  height: 52px;          /* <-- tambahin tinggi header */
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 18px;       /* kiri kanan saja */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ensure header still centers logo */
+.brand-center {
+  grid-column: 2;
+  justify-self: center;
+  align-self: center;
+  position: relative;
+}
+
+/* place bell absolutely inside the header area so it stays at right */
+.icon-bell {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2001;
+}
+
+
+/* ensure icon size */
+.icon-bell img { width:22px; height:22px; }
+
+/* make header area clickable-safe while not visually boxed */
+.appbar { background: transparent; pointer-events: none; }
+.appbar .appbar-inner { pointer-events: auto; } /* allow clicks inside */
+
 
