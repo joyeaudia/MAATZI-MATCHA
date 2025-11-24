@@ -20,7 +20,7 @@
   {
     "id": "drink-strawberry-001",
     "category": "drinks",
-    "title": "Strawberry Matcha Latte🍓🍵",
+    "title": "Strawberry Matcha Latte",
     "subtitle": "MORI-Strawberry vibes with matcha soul",
     "price": 70000,
     "images": ["Dsr/dr4.png"],
@@ -38,7 +38,7 @@
   {
     "id": "drink-banana-001",
     "category": "drinks",
-    "title": "Banana Pudding Matcha Latte🍌🍵",
+    "title": "Banana Pudding Matcha Latte",
     "subtitle": "Velvety banana delight, stirred with matcha.",
     "price": 80000,
     "images": ["Dsr/dr5.png"],
@@ -47,7 +47,7 @@
   {
     "id": "drink-cloudly-001",
     "category": "drinks",
-    "title": "Cloudly Garden Matcha Latte ☁️🍵",
+    "title": "Cloudly Garden Matcha Latte",
     "subtitle": "Soft as clouds, rich as matcha can be",
     "price": 70000,
     "images": ["Dsr/dr6.png"],

@@ -43,9 +43,20 @@
       const subtotal = Number(it.subtotal || (unit * qty) || 0);
       total += subtotal;
 
-      const addonsHtml = (it.addons && it.addons.length)
-        ? it.addons.map(a => `<div class="addon">${escapeHtml(a.label || '')} ${a.price ? `(+${formatRupiah(a.price)})` : ''}</div>`).join('')
-        : '';
+const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
+  const rawLabel = String(a.label || '').trim();
+  // sederhana: deteksi jika label sudah mengandung indikasi harga seperti "(+10K)" atau "Rp"
+  const hasPriceToken = /\(\s*\+\s*\d+|Rp\b|K\)/i.test(rawLabel);
+  const labelEscaped = escapeHtml(rawLabel);
+  if (hasPriceToken) {
+    // label already has price text — keep as-is (escaped)
+    return `<div class="addon">${labelEscaped}</div>`;
+  } else {
+    // label has no price token — append formatted numeric price if present
+    return `<div class="addon">${labelEscaped}${a.price ? ` (+${formatRupiah(a.price)})` : ''}</div>`;
+  }
+}).join('') : '';
+
 
       // choose image: prefer it.image, then it.images[0], then placeholder
       const imgSrc = escapeHtml(it.image || (it.images && it.images[0]) || 'assets/placeholder.png');
@@ -127,13 +138,14 @@
     }
 
     // remove (accept button or inner img)
-    if (e.target.closest('.remove')) {
-      if (!confirm('Hapus item dari keranjang?')) return;
-      cart.splice(idx, 1);
-      saveCart(cart);
-      renderCart();
-      return;
-    }
+if (e.target.closest('.remove')) {
+  // langsung hapus tanpa tanya
+  cart.splice(idx, 1);
+  saveCart(cart);
+  renderCart();
+  return;
+}
+
   });
 
   // ----- public helper to add item to cart (call this from product page) -----
