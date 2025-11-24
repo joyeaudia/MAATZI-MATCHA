@@ -1,16 +1,14 @@
-// item.js — dynamic loader + options + price logic (cleaned + pill-button UI)
+// dsri.js — dynamic loader + options + price logic + like + addToBag (normalized ids with source='dsri')
 (async function () {
   'use strict';
 
-  /* ===========
-     Helpers
-     =========== */
+  /* =========== Helpers =========== */
   const q = s => document.querySelector(s);
   const formatPrice = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n) || 0);
-  const intVal = v => Number(String(v).replace(/[^\d]/g, '')) || 0;
+  const intVal = v => Number(String(v || '').replace(/[^\d]/g, '')) || 0;
   const getIdFromUrl = () => new URLSearchParams(location.search).get('id');
 
-  // simple element creator
+  // element creator helper
   function el(tag, attrs = {}) {
     const e = document.createElement(tag);
     Object.entries(attrs).forEach(([k, v]) => {
@@ -22,10 +20,7 @@
     return e;
   }
 
-  /* =========================
-     Load products JSON file
-     Tries several filenames/paths (prefer dsri.json)
-     ========================= */
+  /* ========================= Load products JSON (dsri) ========================= */
   async function loadProducts() {
     const urls = ['dsri.json', 'products.json', '/dsri.json', '/products.json'];
     for (const u of urls) {
@@ -39,9 +34,7 @@
     throw new Error('products file not found (tried dsri.json/products.json)');
   }
 
-  /* ======================
-     Render product into DOM
-     ====================== */
+  /* ====================== Render product into DOM ====================== */
   function renderProduct(product) {
     const nameEl = q('.product-name');
     const subEl = q('.product-subtitle');
@@ -52,7 +45,9 @@
 
     if (nameEl) {
       nameEl.textContent = product.title || '';
+      // ensure dataset contains normalized id and source
       nameEl.dataset.id = product.id || '';
+      nameEl.dataset.source = product.source || 'dsri';
     }
     if (subEl) subEl.textContent = product.subtitle || '';
     window.productBasePrice = Number(product.price || 0);
@@ -72,31 +67,30 @@
       }
     }
     if (descEl) descEl.innerHTML = product.description || '';
+
     // Render Tips (if any)
-const tipsList = document.getElementById('tips-list');
-if (tipsList) {
-  if (Array.isArray(product.tips) && product.tips.length > 0) {
-    tipsList.innerHTML = '';
-    product.tips.forEach(t => {
-      const li = document.createElement('li');
-      li.textContent = t;
-      tipsList.appendChild(li);
-    });
-  } else {
-    // default tips if none in JSON
-    tipsList.innerHTML = `
-      <li>Serve chilled for best taste.</li>
-      <li>Consume within 4 hours for optimal freshness.</li>
-    `;
-  }
-}
+    const tipsList = document.getElementById('tips-list');
+    if (tipsList) {
+      if (Array.isArray(product.tips) && product.tips.length > 0) {
+        tipsList.innerHTML = '';
+        product.tips.forEach(t => {
+          const li = document.createElement('li');
+          li.textContent = t;
+          tipsList.appendChild(li);
+        });
+      } else {
+        // default tips if none in JSON
+        tipsList.innerHTML = `
+          <li>Serve chilled for best taste.</li>
+          <li>Consume within 4 hours for optimal freshness.</li>
+        `;
+      }
+    }
 
     if (qtyEl && (!qtyEl.value || Number(qtyEl.value) <= 0)) qtyEl.value = 1;
   }
 
-  /* =========================
-     Render product options UI (Pill buttons for radio/checkbox)
-     ========================= */
+  /* ========================= Render options UI (pills, selects) ========================= */
   function renderOptions(options = []) {
     const container = document.getElementById('product-options');
     if (!container) return;
@@ -117,7 +111,6 @@ if (tipsList) {
 
       const inputName = group.key || ('opt_' + Math.random().toString(36).slice(2,7));
 
-      // SELECT: native select dropdown
       if (group.type === 'select') {
         const select = el('select', { name: inputName });
         select.addEventListener('change', () => updatePriceFromUI());
@@ -133,10 +126,10 @@ if (tipsList) {
         return;
       }
 
-      // radio / checkbox => render pill buttons
       const groupWrap = el('div', { class: 'choices' });
       group.choices.forEach(choice => {
-        const isCheckbox = (group.type === 'checkbox') && (group.key !== 'sauce');        const btnClass = isCheckbox ? 'addon-btn' : 'opt-btn';
+        const isCheckbox = (group.type === 'checkbox') && (group.key !== 'sauce');
+        const btnClass = isCheckbox ? 'addon-btn' : 'opt-btn';
         const btn = el('button', {
           class: btnClass,
           type: 'button',
@@ -186,27 +179,21 @@ if (tipsList) {
     updatePriceFromUI();
   }
 
-  /* ===========================
-     Compute options extra cost
-     (now supports <input>, <select>, and pill <button>)
-     =========================== */
+  /* ========================= Compute options delta ========================= */
   function computeOptionsDelta() {
     const container = document.getElementById('product-options');
     if (!container) return 0;
     let delta = 0;
-    // inputs
     container.querySelectorAll('input').forEach(i => {
       if (i.disabled) return;
       if (i.type === 'checkbox' && i.checked) delta += Number(i.dataset.price || 0);
       if (i.type === 'radio' && i.checked) delta += Number(i.dataset.price || 0);
     });
-    // selects
     container.querySelectorAll('select').forEach(s => {
       if (s.disabled) return;
       const opt = s.options[s.selectedIndex];
       if (opt && !opt.disabled) delta += Number(opt.dataset.price || 0);
     });
-    // pill buttons
     container.querySelectorAll('button[data-choice-id]').forEach(b => {
       if (b.disabled) return;
       if (b.getAttribute('aria-pressed') === 'true') delta += Number(b.dataset.price || 0);
@@ -214,9 +201,7 @@ if (tipsList) {
     return delta;
   }
 
-  /* ===========================
-     Update price displayed on page
-     =========================== */
+  /* ========================= Update price displayed ========================= */
   function updatePriceFromUI() {
     try {
       const base = Number(window.productBasePrice || 0);
@@ -233,9 +218,7 @@ if (tipsList) {
     }
   }
 
-  /* ===========================
-     Attach option button behavior for existing static markup
-     =========================== */
+  /* ========================= Attach option logic for existing static markup ========================= */
   function attachOptionLogicForButtons() {
     document.querySelectorAll('.option-group').forEach(group => {
       const buttons = Array.from(group.querySelectorAll('button'));
@@ -262,20 +245,30 @@ if (tipsList) {
     });
   }
 
-  /* ===========================
-     Initialization
-     =========================== */
+  /* ========================= Initialization (load product + normalize ids) ========================= */
   try {
-    const id = getIdFromUrl();
-    if (!id) {
+    const rawId = getIdFromUrl();
+    const source = 'dsri';
+
+    if (!rawId) {
       console.error('No product id in URL (use ?id=product-id). Keeping static/default content if present.');
       attachOptionLogicForButtons();
       document.getElementById('quantity')?.addEventListener('change', updatePriceFromUI);
     } else {
       const products = await loadProducts();
-      const product = products.find(p => p.id === id);
+      // normalize product ids: prefix with source if not already prefixed
+      const normalizedProducts = (products || []).map(p => {
+        const idRaw = String(p.id || p._id || p.code || '');
+        const fullId = idRaw && !idRaw.startsWith(source + '-') ? (source + '-' + idRaw) : idRaw;
+        return Object.assign({}, p, { id: fullId, source });
+      });
+
+      // search: make searchId include prefix if necessary
+      const searchId = rawId && !rawId.startsWith(source + '-') ? (source + '-' + rawId) : rawId;
+
+      const product = normalizedProducts.find(p => p.id === searchId);
       if (!product) {
-        console.error('Product not found for id:', id);
+        console.error('Product not found for id:', rawId);
         attachOptionLogicForButtons();
       } else {
         renderProduct(product);
@@ -290,96 +283,299 @@ if (tipsList) {
     console.error('Error loading product:', err);
   }
 
-  // Expose globally
+  // expose convenience functions
   window.renderOptions = renderOptions;
   window.updatePriceFromUI = updatePriceFromUI;
   window.computeOptionsDelta = computeOptionsDelta;
+
+  /* ========================= Like / Heart handler (save to localStorage likes) ========================= */
+  (function(){
+    // support different naming of the heart button
+    const heartBtn = document.querySelector('.heart') || document.querySelector('.like-toggle') || document.querySelector('[data-like-button]');
+    if (!heartBtn) return;
+
+    const loadLikes = () => { try { return JSON.parse(localStorage.getItem('likes')||'[]'); } catch(e){ return []; } };
+    const saveLikes = arr => localStorage.setItem('likes', JSON.stringify(arr||[]));
+
+    function miniToast(msg) {
+      let t = document.querySelector('.mini-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.className = 'mini-toast';
+        Object.assign(t.style, {
+          position:'fixed', left:'50%', transform:'translateX(-50%)', bottom:'28px',
+          background:'#111', color:'#fff', padding:'8px 12px', borderRadius:'8px', zIndex:1600, opacity:0, transition:'opacity .18s'
+        });
+        document.body.appendChild(t);
+      }
+      t.textContent = msg; t.style.opacity = '1';
+      setTimeout(()=> t.style.opacity = '0', 1300);
+    }
+function makeLikeObj() {
+  const idEl = document.querySelector('.product-name');
+  const idRaw = idEl?.dataset?.id || new URLSearchParams(location.search).get('id') || '';
+  const source = idEl?.dataset?.source || 'dsri';
+  const id = idRaw && !idRaw.startsWith(source + '-') ? (source + '-' + idRaw) : String(idRaw);
+  const title = idEl?.textContent?.trim() || document.title || '';
+
+  // try several selectors to find image element (robust)
+  let imgEl = document.querySelector('.product-image img')
+           || document.querySelector('.product-image')
+           || document.querySelector('.product-thumb img')
+           || document.querySelector('.product-thumb')
+           || null;
+
+  let imgSrc = '';
+  if (imgEl) {
+    if (imgEl.tagName && imgEl.tagName.toLowerCase() === 'img') imgSrc = imgEl.src || imgEl.getAttribute('src') || '';
+    else {
+      // if container, try find an <img> inside
+      imgSrc = (imgEl.querySelector && (imgEl.querySelector('img')?.src || imgEl.querySelector('img')?.getAttribute('src'))) || '';
+    }
+  }
+
+  // normalize to absolute URL if it's relative
+  try {
+    if (imgSrc) {
+      const abs = new URL(imgSrc, location.href);
+      imgSrc = abs.href;
+    }
+  } catch(e){
+    // ignore if cannot normalize
+  }
+
+  const price = Number(document.getElementById('product-price')?.dataset?.base || 0);
+  return { id: String(id), source, title, image: imgSrc || '', price };
 }
 
-)(); // end IIFE
 
 
+    heartBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      const obj = makeLikeObj();
+      if (!obj.id) { miniToast('Tidak dapat menyukai item ini (id produk tidak ditemukan)'); return; }
 
-// ---- Share menu IIFE (separate, runs after DOM ready because script is at body end) ----
-(function(){
-  const shareBtn = document.getElementById('share-btn');
-  const shareMenu = document.getElementById('share-menu');
-  const shareToast = document.getElementById('share-toast');
-  const shareClose = document.getElementById('share-close');
+      let likes = loadLikes();
+      const idx = likes.findIndex(x => String(x.id) === String(obj.id));
 
-  if (!shareBtn || !shareMenu) return; // nothing to do
+      const pressed = heartBtn.getAttribute('aria-pressed') === 'true';
+      heartBtn.setAttribute('aria-pressed', pressed ? 'false' : 'true');
 
-  // use actual current page url
-  const shareUrl = window.location.href;
-
-  function showMenu() {
-    shareMenu.style.display = 'block';
-    shareMenu.setAttribute('aria-hidden', 'false');
-  }
-  function hideMenu() {
-    shareMenu.style.display = 'none';
-    shareMenu.setAttribute('aria-hidden', 'true');
-  }
-  function showToast(msg='Link copied!') {
-    if (!shareToast) return;
-    shareToast.textContent = msg;
-    shareToast.hidden = false;
-    setTimeout(()=> shareToast.hidden = true, 1600);
-  }
-
-  // copy to clipboard
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      showToast('Link disalin ke clipboard');
-    } catch(e) {
-      const ta = document.createElement('textarea');
-      ta.value = shareUrl;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); showToast('Link disalin ke clipboard'); } catch(err) { alert('Copy failed. Link: ' + shareUrl); }
-      document.body.removeChild(ta);
-    }
-    hideMenu();
-  }
-
-  // Web Share API (native)
-  async function nativeShare() {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: document.title || 'Check this product',
-          text: 'Lihat produk ini:',
-          url: shareUrl
-        });
-      } catch(err) {
-        // ignore
+      if (!pressed) {
+        if (idx === -1) likes.unshift(obj);
+        saveLikes(likes);
+        miniToast('Ditambahkan ke Liked');
+      } else {
+        if (idx > -1) likes.splice(idx, 1);
+        saveLikes(likes);
+        miniToast('Dihapus dari Liked');
       }
-    } else {
-      const wa = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(shareUrl);
-      window.open(wa, '_blank');
-    }
-    hideMenu();
+
+      window.dispatchEvent(new CustomEvent('likes:updated', { detail: { likes } }));
+    });
+  })();
+
+  /* ========================= ADD TO BAG (product page) ========================= */
+  (function(){
+    const q = s => document.querySelector(s);
+    const qa = s => Array.from(document.querySelectorAll(s));
+    const num = v => Number(String(v||0).replace(/[^\d]/g,'')) || 0;
+
+function readOptions() {
+  const addons = [];
+  // 1) tombol/button based choices (renderOptions memakai button[data-choice-id] dan aria-pressed)
+  // cari semua tombol di container product-options yang memiliki data-choice-id
+  const container = document.getElementById('product-options');
+  if (container) {
+    container.querySelectorAll('button[data-choice-id], button[data-choice-id]').forEach(btn => {
+      try {
+        if (btn.disabled) return;
+        const pressed = btn.getAttribute('aria-pressed') === 'true';
+        // if pressed, consider it selected
+        if (pressed) {
+          const id = btn.dataset.choiceId || btn.dataset.id || btn.getAttribute('data-id') || btn.textContent.trim();
+          const label = btn.dataset.label || btn.textContent.trim();
+          const price = Number(String(btn.dataset.price || btn.getAttribute('data-price') || btn.dataset.priceDelta || 0).replace(/[^\d\-]/g, '')) || 0;
+          addons.push({ id: String(id).replace(/_/g,'-'), label: label.trim(), price });
+        }
+      } catch (e) { /* ignore single button error */ }
+    });
+
+    // 2) inputs (checkbox / radio)
+    container.querySelectorAll('input').forEach(inp => {
+      try {
+        if (inp.disabled) return;
+        if ((inp.type === 'checkbox' && inp.checked) || (inp.type === 'radio' && inp.checked)) {
+          const id = inp.dataset.choiceId || inp.id || (inp.name + '_' + inp.value);
+          const label = inp.dataset.label || (container.querySelector(`label[for="${inp.id}"]`)?.textContent?.trim()) || id;
+          const price = Number(String(inp.dataset.price || inp.getAttribute('data-price') || 0).replace(/[^\d\-]/g, '')) || 0;
+          addons.push({ id: String(id).replace(/_/g,'-'), label: label.trim(), price });
+        }
+      } catch(e){}
+    });
+
+    // 3) selects
+    container.querySelectorAll('select').forEach(sel => {
+      try {
+        if (sel.disabled) return;
+        const opt = sel.options[sel.selectedIndex];
+        if (opt && !opt.disabled) {
+          const price = Number(String(opt.dataset.price || opt.getAttribute('data-price') || opt.dataset.price || 0).replace(/[^\d\-]/g, '')) || 0;
+          const lab = opt.text || opt.value;
+          addons.push({ id: (sel.name || sel.id) + '_' + (opt.value || opt.text), label: (sel.dataset.label || lab).trim(), price });
+        }
+      } catch(e){}
+    });
+  } else {
+    // fallback: try global buttons if container not present
+    document.querySelectorAll('button[data-choice-id]').forEach(btn=>{
+      const pressed = btn.getAttribute('aria-pressed') === 'true';
+      if (!pressed) return;
+      const id = btn.dataset.choiceId || btn.dataset.id || btn.getAttribute('data-id') || btn.textContent.trim();
+      const label = btn.dataset.label || btn.textContent.trim();
+      const price = Number(String(btn.dataset.price || btn.getAttribute('data-price') || 0).replace(/[^\d\-]/g, '')) || 0;
+      addons.push({ id: String(id).replace(/_/g,'-'), label: label.trim(), price });
+    });
   }
 
+  return addons;
+}
 
-  // event binding
-  shareBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    showMenu();
-  });
-  shareClose?.addEventListener('click', hideMenu);
 
-  shareMenu.addEventListener('click', e => {
-    const act = e.target.getAttribute('data-action');
-    if (!act) return;
-    if (act === 'copy') copyLink();
-    if (act === 'native') nativeShare();
-  });
+    function compute(base, qty, addons){
+      const addTotal = (addons||[]).reduce((s,a)=>s + Number(a.price||0), 0);
+      const unit = Number(base||0) + addTotal;
+      return { unit, subtotal: unit * Math.max(1, Number(qty||1)), addTotal };
+    }
 
-  // close when clicking outside
-  document.addEventListener('click', (ev) => {
-    if (!shareMenu.contains(ev.target) && ev.target !== shareBtn) hideMenu();
-  });
+    function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){return []} }
+    function saveCart(c){ localStorage.setItem('cart', JSON.stringify(c||[])); }
 
-})();
+    function merge(cart, item){
+      const sig = it => (it.addons||[]).map(a=>a.id).sort().join('|');
+      const s = sig(item);
+      for (let i=0;i<cart.length;i++){
+        if (cart[i].id === item.id && sig(cart[i]) === s) {
+          cart[i].qty = Number(cart[i].qty || 1) + Number(item.qty || 1);
+          cart[i].subtotal = Number(cart[i].subtotal || 0) + Number(item.subtotal || 0);
+          return cart;
+        }
+      }
+      cart.push(item);
+      return cart;
+    }
+
+    function toast(msg='Added to bag') {
+      let t = document.querySelector('.mini-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.className = 'mini-toast';
+        t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:#111;color:#fff;padding:8px 12px;border-radius:8px;z-index:1600;opacity:0;transition:opacity .18s';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      setTimeout(()=> t.style.opacity = '0', 1200);
+    }
+
+    function addToBag(goToBag = true) {
+      const idRaw = q('.product-name')?.dataset?.id || new URLSearchParams(location.search).get('id');
+      const source = q('.product-name')?.dataset?.source || 'dsri';
+      const id = idRaw && !idRaw.startsWith(source + '-') ? (source + '-' + idRaw) : idRaw;
+      const title = (q('.product-name')?.textContent || q('.product-title')?.textContent || '').trim();
+      const base = num(q('#product-price')?.dataset?.base || q('#product-price')?.textContent);
+      const qty = Number(q('#quantity')?.value || 1);
+
+      if (!id) { console.warn('no product id'); return false; }
+
+      const addons = readOptions();
+      const pricing = compute(base, qty, addons);
+
+      const productImageEl = q('.product-image');
+      const imageSrc = (productImageEl && productImageEl.tagName && productImageEl.tagName.toLowerCase() === 'img')
+        ? productImageEl.src
+        : (q('.product-image img')?.src || '');
+
+      const item = {
+        id: String(id),
+        source: source,
+        title: title,
+        unitPrice: Number(pricing.unit || 0),
+        qty: Number(qty || 1),
+        addons: Array.isArray(addons) ? addons : [],
+        subtotal: Number(pricing.subtotal || 0),
+        image: imageSrc || ''
+      };
+
+      let cart = loadCart();
+      cart = merge(cart, item);
+      saveCart(cart);
+
+      toast('Item added to bag');
+
+      if (goToBag) setTimeout(() => window.location.href = 'bagfr.html', 450);
+      return true;
+    }
+
+    document.addEventListener('click', e=>{
+      const btn = e.target.closest && e.target.closest('.add-btn, [data-add-to-bag]');
+      if (!btn) return;
+      e.preventDefault();
+      const noRedirect = btn.hasAttribute('data-no-redirect');
+      addToBag(!noRedirect ? true : false);
+    });
+
+    // expose addToBag so bagfr/add buttons can use it
+    window.addToBagFromPage = addToBag;
+    window.addToBag = addToBag;
+  })();
+
+  /* ========================= Checkout/order IIFE (unchanged) ========================= */
+  (function(){
+    const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0));
+    function loadCart(){ try{return JSON.parse(localStorage.getItem('cart')||'[]')}catch(e){return []} }
+    function saveOrders(arr){ localStorage.setItem('orders', JSON.stringify(arr||[])); }
+    function loadOrders(){ try{return JSON.parse(localStorage.getItem('orders')||'[]')}catch(e){return []} }
+    function genId(){ return 'ORD-' + new Date().toISOString().slice(0,10) + '-' + Math.random().toString(36).slice(2,6); }
+
+    function buildMsg(order){
+      const lines = [];
+      lines.push(`📦 New Order — ${order.id}`);
+      lines.push(`Waktu: ${new Date(order.createdAt).toLocaleString('id-ID')}`);
+      lines.push('');
+      order.items.forEach(it=>{
+        const addon = (it.addons || []).map(a=>`${a.label} (+${fmt(a.price)})`).join(', ');
+        lines.push(`• ${it.title} x${it.qty} — ${fmt(it.unitPrice)} ${addon? ' | '+addon : ''} = ${fmt(it.subtotal)}`);
+      });
+      lines.push('');
+      lines.push(`Total: ${fmt(order.total)}`);
+      lines.push('');
+      lines.push('Nama:');
+      lines.push('No. HP:');
+      lines.push('Alamat / Catatan:');
+      lines.push('');
+      lines.push('Mohon konfirmasi ketersediaan & instruksi pembayaran via chat. Terima kasih!');
+      return lines.join('\n');
+    }
+
+    document.addEventListener('click', function(e){
+      if (!e.target.closest) return;
+      const btn = e.target.closest('.checkout, [data-checkout]');
+      if (!btn) return;
+      e.preventDefault();
+      const cart = (function(){ try { return JSON.parse(localStorage.getItem('cart')||'[]'); } catch(e){ return []; } })();
+      if (!cart.length) { alert('Keranjang kosong'); return; }
+      let total=0;
+      const items = cart.map(it=>{ total += Number(it.subtotal||0); return { id: it.id, title: it.title, qty: it.qty, unitPrice: it.unitPrice, addons: it.addons || [], subtotal: it.subtotal }; });
+      const order = { id: genId(), createdAt: Date.now(), status: 'active', items, total };
+      const orders = (function(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } })();
+      orders.unshift(order); saveOrders(orders);
+
+      const waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(buildMsg(order));
+      window.open(waUrl, '_blank');
+
+      window.location.href = 'order.html?order=' + encodeURIComponent(order.id);
+    });
+  })();
+
+})(); // end dsri.js

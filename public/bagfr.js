@@ -153,7 +153,8 @@
         qty: qty,
         subtotal: Number(productObj.subtotal || (unit * qty)),
         image: productObj.image || (productObj.images && productObj.images[0]) || 'assets/placeholder.png',
-        addons: productObj.addons || []
+        addons: productObj.addons || [],
+        source: productObj.source || ''
       };
       cart.push(item);
     }
@@ -173,43 +174,44 @@
   function saveLikes(arr){ localStorage.setItem('likes', JSON.stringify(arr||[])); }
 
   // Render liked cards: each card has a single heart button
-function renderLikedCards() {
-  const likes = loadLikes();
-  const container = document.querySelector('.liked-row') || document.getElementById('liked-row');
-  if (!container) return;
-  container.innerHTML = '';
+  function renderLikedCards() {
+    const likes = loadLikes();
+    const container = document.querySelector('.liked-row') || document.getElementById('liked-row');
+    if (!container) return;
+    container.innerHTML = '';
 
-  if (!likes.length) {
-    container.innerHTML = '<div style="color:#888;padding:12px">You have no liked items yet.</div>';
-    return;
+    if (!likes.length) {
+      container.innerHTML = '<div style="color:#888;padding:12px">You have no liked items yet.</div>';
+      return;
+    }
+
+    likes.forEach(it => {
+      const id = String(it.id || '');
+      const title = String(it.title || '');
+      const image = String(it.image || 'assets/placeholder.png');
+      const price = Number(it.price || 0);
+      const priceText = price ? ('Rp ' + new Intl.NumberFormat('id-ID').format(price)) : '';
+
+      const article = document.createElement('article');
+      article.className = 'like-card';
+      article.setAttribute('role','listitem');
+      article.setAttribute('data-id', id);
+      article.setAttribute('data-source', it.source || (id.includes('dsri-') ? 'dsri' : (id.includes('drsi-') ? 'drsi' : '')));
+      article.innerHTML = `
+        <div class="like-thumb"><img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>
+
+        <div class="like-body">
+          <div class="like-title">${escapeHtml(title)}</div>
+        </div>
+
+        <div class="like-footer">
+          ${priceText ? `<div class="like-price footer-price">${escapeHtml(priceText)}</div>` : ''}
+          <button class="like-heart" aria-label="Unlike" title="Unlike" data-id="${escapeHtml(id)}" aria-pressed="false">❤</button>
+        </div>
+      `;
+      container.appendChild(article);
+    });
   }
-
-  likes.forEach(it => {
-    const id = String(it.id || '');
-    const title = String(it.title || '');
-    const image = String(it.image || 'assets/placeholder.png');
-    const price = Number(it.price || 0);
-    const priceText = price ? ('Rp ' + new Intl.NumberFormat('id-ID').format(price)) : '';
-
-    const article = document.createElement('article');
-    article.className = 'like-card';
-    article.setAttribute('role','listitem');
-    article.setAttribute('data-id', id);
-    article.innerHTML = `
-      <div class="like-thumb"><img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>
-
-      <div class="like-body">
-        <div class="like-title">${escapeHtml(title)}</div>
-      </div>
-
-      <div class="like-footer">
-        ${priceText ? `<div class="like-price footer-price">${escapeHtml(priceText)}</div>` : ''}
-        <button class="like-heart" aria-label="Unlike" title="Unlike" data-id="${escapeHtml(id)}" aria-pressed="false">❤</button>
-      </div>
-    `;
-    container.appendChild(article);
-  });
-}
 
 
   // single delegated handler for like-heart + card navigation
@@ -239,37 +241,47 @@ function renderLikedCards() {
     }
 
     // navigate to product page when clicking card body
-const card = e.target.closest('.like-card');
-if (card) {
-  // prefer explicit data-id attribute
-  let id = card.getAttribute('data-id') || card.dataset.id || null;
+    const card = e.target.closest('.like-card');
+    if (card) {
+      // prefer explicit data-id attribute
+      let id = card.getAttribute('data-id') || card.dataset.id || null;
+      const source = (card.getAttribute('data-source') || card.dataset.source || '').toLowerCase() || null;
 
-  // fallback: try to resolve id from likes storage by matching title or image
-  if (!id) {
-    try {
-      const likes = JSON.parse(localStorage.getItem('likes')||'[]');
-      const title = card.querySelector('.like-title')?.textContent?.trim();
-      const img = card.querySelector('.like-thumb img')?.src;
-      const found = likes.find(x => (x.title && x.title === title) || (x.image && x.image === img));
-      if (found && found.id) id = found.id;
-    } catch(err){
-      // ignore parse errors
+      // fallback: try to resolve id from likes storage by matching title or image
+      if (!id) {
+        try {
+          const likes = JSON.parse(localStorage.getItem('likes')||'[]');
+          const title = card.querySelector('.like-title')?.textContent?.trim();
+          const img = card.querySelector('.like-thumb img')?.src;
+          const found = likes.find(x => (x.title && x.title === title) || (x.image && x.image === img));
+          if (found && found.id) id = found.id;
+        } catch(err){
+          // ignore parse errors
+        }
+      }
+
+      if (!id) {
+        // avoid opening template without id; notify user
+        alert('Tidak dapat menemukan id produk untuk kartu ini.');
+        return;
+      }
+
+      // determine page by source (use fallback rules)
+      let page = './drsi.html'; // default
+      if (source === 'dsri') page = './dsri.html';
+      else if (source === 'bsri') page = './bsri.html';
+      else {
+        // try to infer source from id prefix
+        if (id.startsWith('dsri-')) page = './dsri.html';
+        else if (id.startsWith('drsi-')) page = './drsi.html';
+      }
+
+      // choose whether to strip prefix or not depending on your loader
+      // If your product page expects raw id (without prefix), uncomment next line:
+      // id = id.replace(/^[a-z0-9]+-/, '');
+
+      window.location.assign(`${page}?id=${encodeURIComponent(String(id))}`);
     }
-  }
-
-  console.log('Navigating to product, resolved id =', id);
-
-  if (!id) {
-    // avoid opening template without id; notify user
-    alert('Tidak dapat menemukan id produk untuk kartu ini.');
-    return;
-  }
-
-  // navigate to product page with explicit id
-  const target = `./drsi.html?id=${encodeURIComponent(String(id))}`;
-  window.location.assign(target);
-}
-
   });
 
   // Initialize renders on DOMContentLoaded

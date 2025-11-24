@@ -550,3 +550,13 @@ h2.section{margin:-20px 0 8px;font-size:15px;color:var(--text);font-weight:505;f
 /* scrollbars */
 .brands-wrap::-webkit-scrollbar,.discover-row::-webkit-scrollbar{height:8px;}
 .brands-wrap::-webkit-scrollbar-thumb,.discover-row::-webkit-scrollbar-thumb{background:#ddd;border-radius:8px;}
+
+
+.nav-btn {
+  text-decoration: none;   /* hilangkan garis bawah */
+  color: inherit;          /* biar warna ikut parent */
+}
+
+.nav-btn span {
+  text-decoration: none;
+}
