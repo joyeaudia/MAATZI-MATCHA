@@ -160,7 +160,7 @@ body{
 
 /* active state for choices */
 .choice-btn.active{
-  background: linear-gradient(180deg,#ffd7dc 0%, #ffb6c0 100%);
+  background: linear-gradient(180deg,#ffbbc3 0%, #ffb6c0 100%);
   border: 1px solid var(--active-border);
   box-shadow: 0 8px 24px rgba(255, 20, 80, 0.08);
   color: #000;
@@ -218,4 +218,33 @@ body{
   border: 2px solid var(--active-border);
   box-shadow: 0 8px 24px rgba(255, 20, 80, 0.08);
   transform: translateY(-2px);
+}
+/* small image inside swatch */
+.theme-swatch img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  border-radius:8px;
+}
+
+/* preview box */
+.theme-preview {
+  background: #fff;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,0.04);
+  padding:14px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow: 0 8px 30px rgba(18,18,18,0.06);
+  min-height:120px;
+}
+
+#theme-preview-img {
+  max-width:100%;
+  max-height:180px;
+  object-fit:contain;
+  border-radius:10px;
+  display:block;
 }

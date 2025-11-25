@@ -422,4 +422,16 @@
     });
   });
 }
+// gift-toggle: navigate to gif.html (placed in bagfr.js)
+document.addEventListener('click', function(e){
+  const tg = e.target.closest && e.target.closest('.gift-toggle');
+  if (!tg) return;
+  // toggle visual pressed state
+  const pressed = tg.getAttribute('aria-pressed') === 'true';
+  tg.setAttribute('aria-pressed', pressed ? 'false' : 'true');
+  try { tg.animate([{ transform:'scale(1)' }, { transform:'scale(1.06)' }, { transform:'scale(1)' }], { duration: 180 }); } catch(e){}
+  // open gift page
+  window.location.href = 'gif.html';
+});
+
 })();

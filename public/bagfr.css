@@ -2,8 +2,8 @@
   --bg: #F3F2F7;
   --card: #FFFFFF;
   --muted: #7b7b84;
-  --accent: #FDE8EA;
-  --accent-strong: #FFDBE0;
+  --accent: #ffffff;
+  --accent-strong: #ffffff;
   --shadow: 0 8px 30px rgba(18,18,18,0.06);
   --maxw: 412px;
   --nav-h: 76px;
@@ -353,7 +353,7 @@ body{
 }
 .like-heart:hover,
 .like-heart:focus{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.10); outline: none; }
-.like-heart[aria-pressed="true"]{ color: #ff3b30; background: #fff; box-shadow: 0 12px 28px rgba(255,59,48,0.08); transform: translateY(-2px) scale(1.03); }
+.like-heart[aria-pressed="true"]{ color: #ffffff; background: #fff; box-shadow: 0 12px 28px rgba(255,59,48,0.08); transform: translateY(-2px) scale(1.03); }
 
 /* Bottom nav */
 .bottom-nav{

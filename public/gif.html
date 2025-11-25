@@ -20,7 +20,7 @@
 
       <div class="title" aria-hidden="false">Gifting</div>
 
-      <button class="nav-action nav-right" type="button">Next</button>
+      <a href="./cekout.html" class="nav-action nav-right" role="button" aria-label="Next">Next</a>
     </header>
 
     <main class="content">
@@ -50,53 +50,45 @@
           <button type="button" class="btn choice-btn" data-choice="surprise" aria-pressed="false">Keep it a surprise</button>
         </div>
 
-        <p class="label">Choose your gift card theme</p>
-        <div class="theme-row" aria-label="Themes">
-          <button type="button" class="theme-swatch empty" title="Theme 2" aria-pressed="false"></button>
-          <button type="button" class="theme-swatch empty" title="Theme 3" aria-pressed="false"></button>
-          <button type="button" class="theme-swatch empty" title="Theme 4" aria-pressed="false"></button>
-          <button type="button" class="theme-swatch empty" title="Theme 5" aria-pressed="false"></button>
-        </div>
+      <p class="label">Choose your gift card theme</p>
 
-        <div class="spacer"></div>
+<!-- 5 swatches with images (replace src with your PNG paths) -->
+<div class="theme-row" aria-label="Themes" id="theme-row">
+  <button type="button" class="theme-swatch" data-theme="theme1" aria-pressed="false" title="Floral">
+    <img src="assets/themes/theme1.png" alt="Theme Floral">
+  </button>
+  <button type="button" class="theme-swatch" data-theme="theme2" aria-pressed="false" title="Minimal">
+    <img src="assets/themes/theme2.png" alt="Theme Minimal">
+  </button>
+  <button type="button" class="theme-swatch" data-theme="theme3" aria-pressed="false" title="Festive">
+    <img src="assets/themes/theme3.png" alt="Theme Festive">
+  </button>
+  <button type="button" class="theme-swatch" data-theme="theme4" aria-pressed="false" title="Cute">
+    <img src="assets/themes/theme4.png" alt="Theme Cute">
+  </button>
+  <button type="button" class="theme-swatch" data-theme="theme5" aria-pressed="false" title="Classic">
+    <img src="assets/themes/theme5.png" alt="Theme Classic">
+  </button>
+</div>
 
-        <div class="pink-strip" aria-hidden="true"></div>
+
+<div class="spacer"></div>
+
+<!-- preview area: shows the selected theme larger -->
+<div id="theme-preview-wrap" style="margin-top:16px">
+  <div id="theme-preview" aria-live="polite" class="theme-preview">
+    <img id="theme-preview-img" src="assets/themes/theme1.png" alt="Selected theme preview">
+  </div>
+</div>
+
+
+
+
+
       </form>
     </main>
   </div>
 
-  <script>
-    // Choice buttons: behave like radio (single select)
-    (function() {
-      const choices = Array.from(document.querySelectorAll('.choice-btn'));
-      choices.forEach(btn => {
-        btn.addEventListener('click', () => {
-          choices.forEach(b => {
-            b.classList.remove('active');
-            b.setAttribute('aria-pressed', 'false');
-          });
-          btn.classList.add('active');
-          btn.setAttribute('aria-pressed', 'true');
-
-          // contoh: bisa simpan pilihan ke input hidden atau lakukan aksi lain
-          // console.log('Selected:', btn.dataset.choice);
-        });
-      });
-// Theme swatches: single select (seperti tombol reveal/keep)
-const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
-swatches.forEach(s => {
-  s.addEventListener('click', () => {
-    // reset semua
-    swatches.forEach(x => {
-      x.classList.remove('active');
-      x.setAttribute('aria-pressed','false');
-    });
-    // aktifkan yang diklik
-    s.classList.add('active');
-    s.setAttribute('aria-pressed','true');
-  });
-});
-    })();
-  </script>
+<script src="gif.js"></script>
 </body>
 </html>
