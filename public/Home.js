@@ -2,23 +2,24 @@
 document.addEventListener('DOMContentLoaded', function () {
 
   // ---- 1) Animasi & aksesibilitas untuk tombol Buy ----
-  document.querySelectorAll('.buy-pill').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      btn.animate([
-        { transform: 'scale(1)', opacity: 1 },
-        { transform: 'scale(1.06)', opacity: 0.95 },
-        { transform: 'scale(1)', opacity: 1 }
-      ], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+ // === OPEN PRODUCT PAGE FROM HOME CARDS ===
+document.querySelectorAll('.product').forEach(card => {
+  card.addEventListener('click', () => {
+    const id = card.dataset.id;
+    if (!id) return;
 
-      btn.setAttribute('aria-pressed', 'true');
-      setTimeout(()=> btn.removeAttribute('aria-pressed'), 600);
-      // tempat panggil add-to-cart / open modal dsb.
-    });
+    // Special-case: Matcha (or other drinks starting with "drink-") -> drsi.html
+    // All other products (desserts etc.) -> dsri.html
+    const isMatchaOrDrink = /matcha|^drink-/i.test(id);
 
-    btn.addEventListener('keydown', (ev) => {
-      if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); btn.click(); }
-    });
+    if (isMatchaOrDrink) {
+      window.location.href = `drsi.html?id=${encodeURIComponent(id)}`;
+    } else {
+      window.location.href = `dsri.html?id=${encodeURIComponent(id)}`;
+    }
   });
+});
+
 
   // ---- 2) Admin-editable Booths v1 ----
   // Aktifkan admin mode dengan query param ?admin=1

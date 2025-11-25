@@ -33,7 +33,8 @@ body{
   margin-bottom: 6px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+
 }
 
 /* back di kiri (absolute agar logo tetap centered) */
@@ -114,18 +115,22 @@ body{
 }
 
 /* make the add button fixed width so heart sits to the right */
-.add-btn{
-  background:linear-gradient(180deg,var(--btn-blue), #0066d6);
-  border:none;
-  color:white;
-  padding:10px 95px;
-  border-radius:30px;
-  font-size:12px;
-  font-weight:500;
-  cursor:pointer;
-  box-shadow:0 6px 18px rgba(10,132,255,0.18);
-  transition:transform .12s ease, box-shadow .12s ease, opacity .12s;
+.add-btn {
+  background: linear-gradient(180deg, var(--btn-blue), #0066d6);
+  border: none;
+  color: white;
+  padding: 8px 20px;         /* LEBIH KURUS */
+  width: 100%;               /* PANJANG FULL / atau 85% di bawah */
+  max-width: 370px;          /* biar tidak terlalu lebar pada HP besar */
+  border-radius: 18px;       /* lebih ramping */
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(10,132,255,0.18);
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s;
+  margin-left: 0px;   /* atur sesuai selera, 10–40px */
 }
+
 
 .add-btn:active{ transform:translateY(1px) scale(.997) }
 .add-btn:hover{ box-shadow:0 9px 24px rgba(10,132,255,0.22) }
@@ -363,7 +368,7 @@ body{
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: #000;
+  background: #ffffff;
   color: #fff;
   padding: 10px 16px;
   border-radius: 10px;
@@ -392,5 +397,62 @@ body{
   border-radius: 12px;
   padding: 12px;
   background: #fff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+  box-shadow: 0 10px 30px rgb(255, 255, 255);
+}
+.product-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;        /* dari 16px → 6px (bisa 4px kalau mau lebih dekat lagi) */
+  margin-top: 14px;
+}
+.add-btn {
+  flex: 100;          /* biar tombol memanjang */
+  max-width: none;
+}
+.product-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;               /* 6px sampai 1px terserah */
+  padding-left: 20px;      /* biar tidak terlalu nempel ke kiri */
+  margin-top: 14px;
+}
+/* === FORCE THUMB IMAGE FULL COVER === */
+.cart-item .thumb {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  padding: 0;
+  background: #ffffff; /* atau #fff terserah */
+}
+
+.cart-item .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* FULL IMAGE COVER */
+  display: block;
+}
+
+.cart-item .thumb {
+  width: 120px;
+  height: 120px;
+}
+
+
+/* Make thumbnail box super white and crisp */
+.thumb,
+.cart-thumb,
+.cart-item .thumb {
+  background: #ffffff !important;     /* super white */
+  box-shadow: none !important;        /* hilangkan shadow jika mau */
+  border: 1px solid rgb(255, 255, 255); /* optional: very subtle border */
+}
+
+/* Ensure image covers full box (already suggested earlier) */
+.cart-item .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
