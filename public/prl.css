@@ -175,3 +175,32 @@ body {
 .nav-btn.active img {
     filter: none;
 }
+
+/* EDIT LINK DI BAGIAN ADDRESS */
+.address-section .address-head a {
+    color: #007AFF;           /* biru seperti Edit di atas */
+    text-decoration: none;    /* hilangkan underline */
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* styling untuk profile address combined line */
+.prl-address-line-combined {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: 0.1px;
+}
+
+.prl-address-phone {
+  color: var(--sub);
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.prl-address-body {
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 15px;
+}

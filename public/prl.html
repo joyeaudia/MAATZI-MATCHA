@@ -12,38 +12,51 @@
 <body>
     <div class="device" role="document" aria-label="mock mobile canvas">
         <!-- MAIN CONTENT -->
-        <main class="content">
-            <section class="profile-section">
-                <h1 class="profile-name">Verent Florensa</h1>
-                <p class="member">Member Since 2024</p>
-                <a href="#" class="edit-link top-edit">Edit</a>
+<!-- prl.html (update main profile section) -->
+<main class="content">
+  <section class="profile-section">
+    <!-- Name split into two lines: first + last -->
+    <h1 class="profile-name">
+      <span id="name-first" class="name-first">Veren</span><br>
+      <span id="name-last" class="name-last">Florensa</span>
+    </h1>
+    <p class="member">Member Since <span id="member-since">2024</span></p>
 
-                <div class="info-list">
-                    <div class="info-row">
-                        <div class="label">Email</div>
-                        <div class="value">verentflorensa@gmail.com</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="label">Phone Number</div>
-                        <div class="value">08118281416</div>
-                    </div>
-                </div>
+    <!-- top edit -> goes to edit-profile.html -->
+    <a href="drafamt.html" id="btn-edit-profile" class="edit-link top-edit">Edit</a>
 
-                <div class="address-section">
-                    <div class="address-head">
-                        <div class="label">Address</div>
-                        <a href="#" class="edit-link small">Edit</a>
-                    </div>
-                    <p class="address-text">
-                        Green Lake City cluster Europe,<br> Ketapang, Cipondoh.<br> Tangerang, Banten 15147
-                    </p>
-                </div>
+    <div class="info-list">
+      <div class="info-row">
+        <div class="label">Email</div>
+        <div id="email-val" class="value">verentflorensa@gmail.com</div>
+      </div>
+      <div class="info-row">
+        <div class="label">Phone Number</div>
+        <div id="phone-val" class="value">08118281416</div>
+      </div>
+    </div>
 
-                <div class="logout">
-                    <a href="#" class="logout-btn">Log Out</a>
-                </div>
-            </section>
-        </main>
+    <div class="address-section">
+      <div class="address-head">
+        <div class="label">Address</div>
+        <!-- address edit -> goes to address.html -->
+        <a href="drafamt.html" id="btn-edit-address" class="edit-link small">Edit</a>
+      </div>
+      <p id="address-text" class="address-text">
+        Green Lake City cluster Europe,<br> Ketapang, Cipondoh.<br> Tangerang, Banten 15147
+      </p>
+    </div>
+
+  <div class="logout">
+  <a href="Index.html" class="logout-btn">Log Out</a>
+</div>
+
+  </section>
+</main>
+
+<!-- include script at end of body -->
+<script src="prl.js"></script>
+
     </div>
 
     <!-- BOTTOM NAV -->

@@ -12,6 +12,18 @@
         <div class="card">
             <h2>Shipping Address</h2>
             <form>
+
+
+<!-- muncul hanya jika pilih Other -->
+<input 
+    type="text" 
+    id="custom-label" 
+    placeholder="Custom Label (optional)" 
+    style="display:none; margin-top:6px;"
+>
+<label for="address-label">Address Label</label>
+<input type="text" id="address-label" placeholder="Contoh: Home / Office / Ashley's" />
+
                 <label for="recipient-name">Recipient Name</label>
                 <input type="text" id="recipient-name" placeholder="Enter Recipient Name" required />
 
@@ -33,19 +45,16 @@
                     <option value="" disabled selected>Select Province/State</option>
                     <option value="jawa-barat">Jawa Barat</option>
                     <option value="dki-jakarta">DKI Jakarta</option>
+                    <option value="dki-jakarta">Tanggerang</option>
                 </select>
                 
                 <label for="postal-code">Postal Code</label>
                 <input type="text" id="postal-code" placeholder="Enter Postal Code" required />
 
-                <div class="default-address-row">
-                    <input type="checkbox" id="default-address" class="custom-checkbox">
-                    <label for="default-address">Set as default address</label>
-                </div>
-
                 <button type="submit" class="create-btn save-btn">Save Address</button>
             </form>
         </div>
     </div>
+     <script src="alamat.js"></script>
 </body>
 </html>
