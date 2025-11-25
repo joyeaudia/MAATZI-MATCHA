@@ -135,4 +135,212 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   })();
+  // order-list rendering for order.html
+(function(){
+  function fmt(n){ return 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0)); }
+  function loadOrders(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } }
+
+  function renderOrdersList() {
+    const orders = loadOrders();
+    const activePanel = document.getElementById('tab-active');
+    if (!activePanel) return;
+
+    activePanel.innerHTML = ''; // clear sample static markup
+
+    if (!orders.length) {
+      activePanel.innerHTML = '<div style="padding:16px;color:#666">Belum ada pesanan.</div>';
+      return;
+    }
+
+    // we render newest order at top (orders[0])
+    const order = orders[0];
+    // prepare first item display + "+N more"
+    const first = order.items[0];
+    const moreCount = Math.max(0, order.items.length - 1);
+
+    const article = document.createElement('article');
+    article.className = 'order-card';
+
+    const imgHtml = first.image ? `<img src="${first.image}" alt="${escapeHtml(first.title)}" style="width:68px;height:68px;object-fit:cover;border-radius:8px">` :
+                   `<div class="thumb"></div>`;
+
+    article.innerHTML = `
+      <div class="thumb">${imgHtml}</div>
+      <div class="order-info">
+        <div class="order-top">
+          <h3 class="product-title">${escapeHtml(first.title)}</h3>
+          <span class="more">${moreCount > 0 ? '+'+moreCount + ' More' : ''}</span>
+        </div>
+        <p class="brand">Order ID: ${escapeHtml(order.id)}</p>
+        <div class="status-row">
+          <span class="status">Status : <strong>${escapeHtml(order.status)}</strong></span>
+          <span class="eta">Created : <em>${new Date(order.createdAt).toLocaleString()}</em></span>
+        </div>
+        <div class="order-actions">
+          <button class="btn-outline" data-order-id="${escapeHtml(order.id)}">Track Order</button>
+          <button class="btn-light" data-order-id="${escapeHtml(order.id)}">View Details</button>
+        </div>
+      </div>
+    `;
+    activePanel.appendChild(article);
+
+    // OPTION: if user clicks "View Details" we can open a details panel showing all items.
+    activePanel.addEventListener('click', function(e){
+      const btn = e.target.closest('[data-order-id]');
+      if (!btn) return;
+      const id = btn.dataset.orderId;
+      if (!id) return;
+      // open details: for simplicity, go to same page with ?order=id and show details
+      // you can implement modal or navigate to order-detail.html
+      renderOrderDetails(id);
+    });
+  }
+
+  function renderOrderDetails(orderId) {
+    const orders = loadOrders();
+    const order = orders.find(o => String(o.id) === String(orderId));
+    if (!order) { alert('Order tidak ditemukan'); return; }
+
+    // Simple details view: replace content with full list (you can make prettier)
+    const panel = document.getElementById('tab-active');
+    panel.innerHTML = '<h2>Order Details</h2>';
+    const list = document.createElement('div');
+    order.items.forEach(it => {
+      const itEl = document.createElement('div');
+      itEl.className = 'order-item';
+      itEl.style.padding = '8px 0';
+      itEl.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:56px;height:56px;background:#f2f2f4;border-radius:8px;overflow:hidden">
+            ${it.image ? `<img src="${it.image}" style="width:100%;height:100%;object-fit:cover">` : ''}
+          </div>
+          <div>
+            <div style="font-weight:700">${escapeHtml(it.title)} ${it.addons && it.addons.length ? '<small style="display:block;color:#666;font-weight:500;margin-top:6px">'+it.addons.map(a=>escapeHtml(a.label)).join(', ')+'</small>' : ''}</div>
+            <div style="color:#666;margin-top:6px">${it.qty} × ${fmt(it.unitPrice)} = ${fmt(it.subtotal)}</div>
+          </div>
+        </div>
+      `;
+      list.appendChild(itEl);
+    });
+    const tot = document.createElement('div');
+    tot.style.marginTop = '12px';
+    tot.innerHTML = `<strong>Total: ${fmt(order.total)}</strong>`;
+    panel.appendChild(list);
+    panel.appendChild(tot);
+  }
+
+  // helper escapeHtml (same as bagfr.js)
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+  // initial render
+  document.addEventListener('DOMContentLoaded', function(){ renderOrdersList(); });
+
+  // expose for debugging
+  window.renderOrdersList = renderOrdersList;
+})();
+// order-list rendering for order.html
+(function(){
+  function fmt(n){ return 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(n||0)); }
+  function loadOrders(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } }
+
+  function renderOrdersList() {
+    const orders = loadOrders();
+    const activePanel = document.getElementById('tab-active');
+    if (!activePanel) return;
+
+    activePanel.innerHTML = ''; // clear sample static markup
+
+    if (!orders.length) {
+      activePanel.innerHTML = '<div style="padding:16px;color:#666">Belum ada pesanan.</div>';
+      return;
+    }
+
+    // we render newest order at top (orders[0])
+    const order = orders[0];
+    // prepare first item display + "+N more"
+    const first = order.items[0];
+    const moreCount = Math.max(0, order.items.length - 1);
+
+    const article = document.createElement('article');
+    article.className = 'order-card';
+
+    const imgHtml = first.image ? `<img src="${first.image}" alt="${escapeHtml(first.title)}" style="width:68px;height:68px;object-fit:cover;border-radius:8px">` :
+                   `<div class="thumb"></div>`;
+
+    article.innerHTML = `
+      <div class="thumb">${imgHtml}</div>
+      <div class="order-info">
+        <div class="order-top">
+          <h3 class="product-title">${escapeHtml(first.title)}</h3>
+          <span class="more">${moreCount > 0 ? '+'+moreCount + ' More' : ''}</span>
+        </div>
+        <p class="brand">Order ID: ${escapeHtml(order.id)}</p>
+        <div class="status-row">
+          <span class="status">Status : <strong>${escapeHtml(order.status)}</strong></span>
+          <span class="eta">Created : <em>${new Date(order.createdAt).toLocaleString()}</em></span>
+        </div>
+        <div class="order-actions">
+          <button class="btn-outline" data-order-id="${escapeHtml(order.id)}">Track Order</button>
+          <button class="btn-light" data-order-id="${escapeHtml(order.id)}">View Details</button>
+        </div>
+      </div>
+    `;
+    activePanel.appendChild(article);
+
+    // OPTION: if user clicks "View Details" we can open a details panel showing all items.
+    activePanel.addEventListener('click', function(e){
+      const btn = e.target.closest('[data-order-id]');
+      if (!btn) return;
+      const id = btn.dataset.orderId;
+      if (!id) return;
+      // open details: for simplicity, go to same page with ?order=id and show details
+      // you can implement modal or navigate to order-detail.html
+      renderOrderDetails(id);
+    });
+  }
+
+  function renderOrderDetails(orderId) {
+    const orders = loadOrders();
+    const order = orders.find(o => String(o.id) === String(orderId));
+    if (!order) { alert('Order tidak ditemukan'); return; }
+
+    // Simple details view: replace content with full list (you can make prettier)
+    const panel = document.getElementById('tab-active');
+    panel.innerHTML = '<h2>Order Details</h2>';
+    const list = document.createElement('div');
+    order.items.forEach(it => {
+      const itEl = document.createElement('div');
+      itEl.className = 'order-item';
+      itEl.style.padding = '8px 0';
+      itEl.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:56px;height:56px;background:#f2f2f4;border-radius:8px;overflow:hidden">
+            ${it.image ? `<img src="${it.image}" style="width:100%;height:100%;object-fit:cover">` : ''}
+          </div>
+          <div>
+            <div style="font-weight:700">${escapeHtml(it.title)} ${it.addons && it.addons.length ? '<small style="display:block;color:#666;font-weight:500;margin-top:6px">'+it.addons.map(a=>escapeHtml(a.label)).join(', ')+'</small>' : ''}</div>
+            <div style="color:#666;margin-top:6px">${it.qty} × ${fmt(it.unitPrice)} = ${fmt(it.subtotal)}</div>
+          </div>
+        </div>
+      `;
+      list.appendChild(itEl);
+    });
+    const tot = document.createElement('div');
+    tot.style.marginTop = '12px';
+    tot.innerHTML = `<strong>Total: ${fmt(order.total)}</strong>`;
+    panel.appendChild(list);
+    panel.appendChild(tot);
+  }
+
+  // helper escapeHtml (same as bagfr.js)
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+  // initial render
+  document.addEventListener('DOMContentLoaded', function(){ renderOrdersList(); });
+
+  // expose for debugging
+  window.renderOrdersList = renderOrdersList;
+})();
+
+
 });

@@ -293,4 +293,73 @@
   // allow other parts to request re-render
   window.addEventListener('likes:updated', renderLikedCards);
 
+}
+)();
+// ===== Checkout -> create order & redirect to order.html =====
+(function(){
+  function genOrderId() {
+    return 'ORD-' + new Date().toISOString().slice(0,10) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+  }
+
+  function loadCartSafe(){ try { return JSON.parse(localStorage.getItem('cart')||'[]'); } catch(e){ return []; } }
+  function saveOrders(arr){ localStorage.setItem('orders', JSON.stringify(arr||[])); }
+  function loadOrders(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } }
+
+  // build a minimal order object from cart
+  function buildOrderFromCart() {
+    const cart = loadCartSafe();
+    if (!cart.length) return null;
+    let total = 0;
+    const items = cart.map(it => {
+      const unit = Number(it.unitPrice || it.price || 0);
+      const qty = Number(it.qty || 1);
+      const subtotal = Number(it.subtotal || (unit * qty) || (unit*qty));
+      total += subtotal;
+      // keep addons array as-is (if present)
+      return {
+        id: it.id,
+        title: it.title,
+        qty: qty,
+        unitPrice: unit,
+        subtotal: subtotal,
+        addons: it.addons || [],
+        image: it.image || (it.images && it.images[0]) || ''
+      };
+    });
+
+    return {
+      id: genOrderId(),
+      createdAt: Date.now(),
+      status: 'active', // you can change to 'pending' etc
+      total: total,
+      items: items
+    };
+  }
+
+  // attach handler to .checkout button (delegated in case button created later)
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest && e.target.closest('.checkout');
+    if (!btn) return;
+    e.preventDefault();
+
+    const order = buildOrderFromCart();
+    if (!order) {
+      alert('Keranjang kosong. Tambahkan item dulu sebelum checkout.');
+      return;
+    }
+
+    // save order at front of orders list
+    const orders = loadOrders();
+    orders.unshift(order);
+    saveOrders(orders);
+
+    // clear cart (optional). If you want to keep cart, remove these two lines.
+    localStorage.removeItem('cart');
+    // re-render current bag UI
+    if (typeof renderCart === 'function') renderCart();
+
+    // redirect to orders page (active tab). Pass order id for convenience.
+    // order.html will read localStorage['orders'] to render.
+    window.location.href = './order.html?order=' + encodeURIComponent(order.id);
+  });
 })();

@@ -638,3 +638,13 @@ ooter style: price + heart aligned horizontally */
 .like-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:0 8px; }
 .like-price.footer-price { font-weight:800; font-size:15px; color:#111; }
 .like-footer .like-heart { margin-left:auto; }
+
+
+.nav-btn {
+  text-decoration: none;   /* hilangkan garis bawah */
+  color: inherit;          /* biar warna ikut parent */
+}
+
+.nav-btn span {
+  text-decoration: none;
+}

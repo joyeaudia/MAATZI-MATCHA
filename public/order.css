@@ -311,3 +311,11 @@ header.appbar {
 /* atau: buat transparan jika mau tetap ada di DOM */
 .appbar-underline { background: transparent !important; height: 0 !important; visibility: hidden !important; }
 
+.nav-btn {
+  text-decoration: none;   /* hilangkan garis bawah */
+  color: inherit;          /* biar warna ikut parent */
+}
+
+.nav-btn span {
+  text-decoration: none;
+}
