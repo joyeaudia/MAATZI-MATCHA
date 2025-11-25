@@ -362,4 +362,64 @@
     // order.html will read localStorage['orders'] to render.
     window.location.href = './order.html?order=' + encodeURIComponent(order.id);
   });
+  function renderOrdersList() {
+  const orders = (function(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } })();
+  const activePanel = document.getElementById('tab-active');
+  if (!activePanel) return;
+  activePanel.innerHTML = '';
+
+  if (!orders.length) {
+    activePanel.innerHTML = '<div style="padding:16px;color:#666">Belum ada pesanan.</div>';
+    return;
+  }
+
+  // newest order
+  const order = orders[0];
+  const first = order.items && order.items[0];
+  if (!first) {
+    activePanel.innerHTML = '<div style="padding:16px;color:#666">Order data tidak lengkap.</div>';
+    return;
+  }
+  const moreCount = Math.max(0, order.items.length - 1);
+
+  // Determine brand/category (Desserts / Drinks) from first.id (prefix heuristics)
+  let brand = '';
+  const idLower = String(first.id||'').toLowerCase();
+  if (idLower.startsWith('dsri') || idLower.startsWith('dessert') || idLower.includes('dessert')) brand = 'Desserts';
+  else if (idLower.startsWith('drsi') || idLower.startsWith('drink') || idLower.includes('drink')) brand = 'Drinks';
+  else brand = 'Products';
+
+  const imgHtml = first.image ? `<img src="${escapeHtml(first.image)}" alt="${escapeHtml(first.title)}" style="width:68px;height:68px;object-fit:cover;border-radius:8px">` : `<div class="thumb"></div>`;
+
+  const article = document.createElement('article');
+  article.className = 'order-card';
+  article.innerHTML = `
+    <div class="thumb">${imgHtml}</div>
+    <div class="order-info">
+      <div class="order-top">
+        <h3 class="product-title">${escapeHtml(first.title)}</h3>
+        <span class="more">${moreCount > 0 ? '+'+moreCount + ' More' : ''}</span>
+      </div>
+      <p class="brand">${escapeHtml(brand)}</p>
+      <div class="status-row">
+        <span class="status">Status : <strong>${escapeHtml(order.status)}</strong></span>
+        <span class="eta">Created : <em>${new Date(order.createdAt).toLocaleString()}</em></span>
+      </div>
+      <div class="order-actions">
+        <button class="btn-outline" data-order-id="${escapeHtml(order.id)}">Track Order</button>
+        <button class="btn-light" data-order-id="${escapeHtml(order.id)}">View Details</button>
+      </div>
+    </div>
+  `;
+  activePanel.appendChild(article);
+
+  // delegate view details
+  activePanel.querySelectorAll('[data-order-id]').forEach(b=>{
+    b.addEventListener('click', function(ev){
+      const id = this.dataset.orderId;
+      if (!id) return;
+      renderOrderDetails(id);
+    });
+  });
+}
 })();
