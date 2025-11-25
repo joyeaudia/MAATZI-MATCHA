@@ -276,5 +276,111 @@ window.addEventListener('storage', (ev) => {
 
 document.addEventListener('DOMContentLoaded', () => reloadBoothsFromStorage());
 
-}); // end DOMContentLoaded
+}); 
+// === OPEN PRODUCT PAGE FROM HOME CARDS ===
+document.querySelectorAll('.product').forEach(card => {
+  card.addEventListener('click', () => {
+    const id = card.dataset.id;
+    if (!id) return;
 
+    // minuman dan dessert pakai halaman yang sama (drsi.html)
+    window.location.href = `drsi.html?id=${id}`;
+  });
+});
+// end DOMContentLoaded
+
+// ===== Buy pill: add to cart + show small auto-fading "add to bag" label =====
+document.querySelectorAll('.product .buy-pill').forEach(btn => {
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation(); // jangan trigger click di card (yang membuka detail)
+
+    const card = btn.closest('.product');
+    if (!card) return;
+
+    // baca minimal data dari card
+    const id = card.dataset.id || card.querySelector('.title')?.textContent?.trim() || '';
+    const title = card.querySelector('.title')?.textContent?.trim() || '';
+    const img = card.querySelector('img')?.getAttribute('src') || '';
+    const priceText = card.querySelector('.price-row')?.textContent || '';
+    const price = Number((priceText || '').replace(/[^\d]/g, '')) || 0;
+
+    // ambil cart, push item (merge sederhana: jika sama id+addons -> tambah qty)
+    function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){ return []; } }
+    function saveCart(c){ localStorage.setItem('cart', JSON.stringify(c||[])); }
+
+    const cart = loadCart();
+    // cari item serupa (sederhana: sama id tanpa addons)
+    const existing = cart.find(i => i.id === id && (!i.addons || i.addons.length === 0));
+    if (existing) {
+      existing.qty = Number(existing.qty || 1) + 1;
+      existing.subtotal = Number(existing.subtotal || 0) + price;
+    } else {
+      cart.push({
+        id: id,
+        title: title,
+        image: img,
+        qty: 1,
+        addons: [],
+        unitPrice: price,
+        subtotal: price
+      });
+    }
+    saveCart(cart);
+
+    // tampilkan mini toast "add to bag" tanpa perlu klik apa-apa
+    showMiniToast('🛍️', btn);
+  });
+});
+
+// helper: showMiniToast(message, anchorElement OPTIONAL)
+// - message: teks (string)
+// - anchorElement: elemen relatif (mis. tombol) untuk posisi; kalau tidak diberikan, tampil di bottom-center
+function showMiniToast(message = '🛍️', anchorEl = null) {
+  // reuse existing element jika ada
+  let t = document.querySelector('.mini-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.className = 'mini-toast';
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    document.body.appendChild(t);
+  }
+  t.textContent = message;
+
+  // posisi: jika ada anchorEl, tampilkan sedikit di atas anchor; else bottom-center
+  if (anchorEl && anchorEl.getBoundingClientRect) {
+    const r = anchorEl.getBoundingClientRect();
+    // convert to page coords and set style
+    t.style.position = 'fixed';
+    t.style.left = (r.left + r.width/2) + 'px';
+    // tampil agak di atas tombol (20px)
+    t.style.top = (r.top - 36) + 'px';
+    t.style.transform = 'translateX(-50%)';
+  } else {
+    t.style.position = 'fixed';
+    t.style.left = '50%';
+    t.style.bottom = '72px';
+    t.style.transform = 'translateX(-50%)';
+    t.style.top = '';
+  }
+
+  // show
+  t.style.opacity = '1';
+  t.style.pointerEvents = 'none';
+
+  // clear any pending hide timers
+  if (t._hideTimeout) clearTimeout(t._hideTimeout);
+  // hide after 900ms
+  t._hideTimeout = setTimeout(() => {
+    t.style.opacity = '0';
+    t._hideTimeout2 = setTimeout(()=> {
+      // cleanup if you want
+      if (t && t.parentNode) {
+        // keep element for reuse (faster), just hide
+        t.style.left = '';
+        t.style.top = '';
+        t.style.bottom = '';
+      }
+    }, 220);
+  }, 900);
+}
