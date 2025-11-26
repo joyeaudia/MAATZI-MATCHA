@@ -136,3 +136,185 @@ body{
   background:#f5f5f8;
   color:#444;
 }
+
+/* ========== Admin Delivery Detail (versi lebih lembut) ========== */
+
+/* wrapper halaman detail */
+#admin-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+/* Kartu ringkasan order */
+#adm-summary-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px 16px 14px;
+  border: 1px solid #ececf5;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+#adm-summary-card .admin-order-header {
+  margin-bottom: 6px;
+}
+
+#adm-summary-card .admin-status-row {
+  margin-bottom: 4px;
+}
+
+#adm-summary-card .admin-items {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+/* Kartu section (Delivery Settings + Delivery Tracking) */
+.admin-detail-section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 16px 16px;
+  border: 1px solid #ececf5;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+/* judul section */
+.admin-section-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #20212b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-section-title::before {
+  content: "";
+  width: 3px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* baris form (label di atas input, biar nggak kaku) */
+.admin-form-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 8px 0 10px;
+  width: 100%;
+}
+
+.admin-form-row label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* input teks / angka / date */
+.admin-form-row input[type="text"],
+.admin-form-row input[type="number"],
+.admin-form-row input[type="date"] {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #d7d8ee;
+  background: #f7f7ff;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease,
+              transform 0.08s ease;
+}
+
+.admin-form-row input::placeholder {
+  color: #aaabc3;
+}
+
+.admin-form-row input:focus {
+  border-color: var(--accent);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+/* baris toggle */
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+.admin-toggle-row label {
+  color: #444;
+}
+
+.admin-toggle-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* garis pemisah di tengah section */
+.admin-detail-section hr {
+  border: none;
+  border-top: 1px dashed #e3e4f3;
+  margin: 10px 0 8px;
+}
+
+/* area tombol */
+.admin-detail-section .admin-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* tombol umum */
+.admin-detail-section .btn {
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 12px;
+}
+
+/* Save (netral biru muda) */
+#btn-save-tracking {
+  background: #eef1ff;
+  border-color: #dde2ff;
+  color: #27335a;
+}
+
+/* Mark as Delivered (hijau) */
+#btn-mark-delivered {
+  background: #10b981;
+  border-color: #0f9366;
+  color: #ffffff;
+}
+
+/* Back (outline kalem) */
+#btn-back-list {
+  background: #ffffff;
+  color: #444;
+  border-color: #e1e2ee;
+}
+
+/* hover lembut */
+.admin-detail-section .btn:hover {
+  filter: brightness(0.97);
+  transform: translateY(-0.5px);
+}
+
+/* responsive kecil (kalau nanti dibuka sempit) */
+@media (max-width: 480px) {
+  #admin-detail {
+    gap: 14px;
+  }
+
+  .admin-detail-section {
+    padding: 12px 14px 14px;
+  }
+}

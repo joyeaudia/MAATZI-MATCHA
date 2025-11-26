@@ -4,20 +4,18 @@
 
   // ===== HELPER DASAR =====
   function safeParse(key){
-    try { 
-      return JSON.parse(localStorage.getItem(key) || '[]'); 
-    }
-    catch(e){ 
-      return []; 
+    try {
+      return JSON.parse(localStorage.getItem(key) || '[]');
+    } catch(e){
+      return [];
     }
   }
 
   function saveOrders(list){
-    try { 
-      localStorage.setItem('orders', JSON.stringify(list || [])); 
-    }
-    catch(e){ 
-      console.error('Failed to save orders', e); 
+    try {
+      localStorage.setItem('orders', JSON.stringify(list || []));
+    } catch(e){
+      console.error('Failed to save orders', e);
     }
   }
 
@@ -27,11 +25,7 @@
 
   function escapeHtml(s){
     return String(s||'').replace(/[&<>"']/g, c => ({
-      '&':'&amp;',
-      '<':'&lt;',
-      '>':'&gt;',
-      '"':'&quot;',
-      "'":'&#39;'
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
     }[c]));
   }
 
@@ -41,7 +35,6 @@
 
   // ===== HELPER NOTIFIKASI (ADMIN ACC / REJECT) =====
   function addNotifForOrder(order, kind){
-    // ambil list notifikasi lama
     let notifs;
     try {
       notifs = JSON.parse(localStorage.getItem('notifications_v1') || '[]');
@@ -71,12 +64,10 @@
       title: title,
       message: message,
       emoji: emoji,
-      time: 'Just now',   // biar keliatan baru di notif page
-      isRead: false       // 🔴 default: belum dibaca
+      time: 'Just now',
+      isRead: false
     };
 
-
-    // taruh notif terbaru di paling atas
     notifs.unshift(newNotif);
 
     try {
@@ -94,7 +85,7 @@
 
     let orders = loadOrders() || [];
 
-    // ⛔ Jangan tampilkan order yg sudah dibatalkan
+    // jangan tampilkan yg sudah dibatalkan
     orders = orders.filter(o => String(o.status || '').toLowerCase() !== 'cancelled');
 
     if (!orders.length){
@@ -102,7 +93,6 @@
       return;
     }
 
-    // terbaru di atas (di bagfr.js kita kemungkinan pakai unshift)
     orders.forEach(order => {
       container.appendChild(renderAdminCard(order));
     });
@@ -117,7 +107,7 @@
     const status = (order.status || 'active').toLowerCase();
     const paymentStatus = (order.paymentStatus || 'pending').toLowerCase();
 
-    // address: pakai default savedAddresses_v1 (sama dengan user view)
+    // address: pakai default savedAddresses_v1
     const savedAddrs = safeParse('savedAddresses_v1');
     let chosenAddr = null;
     if (Array.isArray(savedAddrs) && savedAddrs.length){
@@ -144,7 +134,6 @@
       `;
     }
 
-    // simple item summary (first item + count)
     const first = order.items && order.items[0];
     const moreCount = Math.max(0, (order.items || []).length - 1);
     const firstTitle = first ? escapeHtml(first.title) : 'No title';
@@ -172,63 +161,79 @@
 
       ${addrBlock}
 
-          <div class="admin-actions">
-        ${paymentStatus === 'paid' ? '' : `
-          <button class="btn btn-approve" data-id="${escapeHtml(order.id)}">ACC (sudah dibayar)</button>
-          <button class="btn btn-reject" data-id="${escapeHtml(order.id)}">Tolak order</button>
-        `}
+      <div class="admin-actions">
+        <button class="btn btn-approve" data-id="${escapeHtml(order.id)}">ACC (sudah dibayar)</button>
+        <button class="btn btn-reject" data-id="${escapeHtml(order.id)}">Tolak order</button>
       </div>
-
     `;
 
-    // ===== EVENT BUTTON ACC =====
     const approveBtn = card.querySelector('.btn-approve');
     const rejectBtn  = card.querySelector('.btn-reject');
 
-    if (approveBtn){
-      approveBtn.addEventListener('click', function(){
-        const id = this.dataset.id;
-        const all = loadOrders();
-        const idx = all.findIndex(o => String(o.id) === String(id));
-        if (idx !== -1){
-          // update status pembayaran
-          all[idx].paymentStatus = 'paid';
-          if (!all[idx].status) all[idx].status = 'active';
+    // kalau sudah paid: sembunyikan tombol ACC & Tolak
+    if (paymentStatus === 'paid') {
+      if (approveBtn) approveBtn.style.display = 'none';
+      if (rejectBtn)  rejectBtn.style.display = 'none';
+    } else {
 
-          // 🔔 Tambah notif Payment Confirmed
-          addNotifForOrder(all[idx], 'approved');
+      // ===== EVENT BUTTON ACC =====
+      if (approveBtn){
+        approveBtn.addEventListener('click', function(){
+          const id = this.dataset.id;
+          const all = loadOrders();
+          const idx = all.findIndex(o => String(o.id) === String(id));
+          if (idx !== -1){
+            all[idx].paymentStatus = 'paid';
+            if (!all[idx].status) all[idx].status = 'active';
 
-          saveOrders(all);
-          renderAdminList();
-          alert('Order di-set sebagai SUDAH DIBAYAR.');
-        }
-      });
+            addNotifForOrder(all[idx], 'approved');
+
+            saveOrders(all);
+            renderAdminList();
+            alert('Order di-set sebagai SUDAH DIBAYAR.');
+          }
+        });
+      }
+
+      // ===== EVENT BUTTON REJECT =====
+      if (rejectBtn){
+        rejectBtn.addEventListener('click', function(){
+          const id = this.dataset.id;
+          const all = loadOrders();
+          const idx = all.findIndex(o => String(o.id) === String(id));
+          if (idx !== -1){
+            all[idx].paymentStatus = 'rejected';
+            all[idx].status = 'cancelled';
+
+            addNotifForOrder(all[idx], 'rejected');
+
+            saveOrders(all);
+            renderAdminList();
+            alert('Order telah DITOLAK / dibatalkan oleh admin.');
+          }
+        });
+      }
     }
 
-    // ===== EVENT BUTTON REJECT =====
-    if (rejectBtn){
-      rejectBtn.addEventListener('click', function(){
-        const id = this.dataset.id;
-        const all = loadOrders();
-        const idx = all.findIndex(o => String(o.id) === String(id));
-        if (idx !== -1){
-          // update status jadi cancelled + payment rejected
-          all[idx].paymentStatus = 'rejected';
-          all[idx].status = 'cancelled';
+    // ===== KLIK KARTU -> BUKA DETAIL ADMIN =====
+    card.addEventListener('click', function (e) {
+      // kalau yang diklik tombol di dalam .admin-actions, jangan redirect
+      if (e.target.closest('.admin-actions')) return;
 
-          // 🔔 Tambah notif Order Rejected
-          addNotifForOrder(all[idx], 'rejected');
+      // ide kamu: hanya setelah payment sudah "paid" boleh ke halaman tracking admin
+      if (paymentStatus !== 'paid') {
+        // opsional: kasih info kecil
+        // alert('Order harus di-ACC dulu sebelum tracking pengiriman.');
+        return;
+      }
 
-          saveOrders(all);
-          renderAdminList(); // karena difilter cancelled, kartu akan hilang
-          alert('Order telah DITOLAK / dibatalkan oleh admin.');
-        }
-      });
-    }
+      const oid = order.id || '';
+      if (!oid) return;
+      window.location.href = 'diteladm.html?id=' + encodeURIComponent(oid);
+    });
 
     return card;
   }
 
-  // ===== INIT =====
   document.addEventListener('DOMContentLoaded', renderAdminList);
 })();
