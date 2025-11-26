@@ -319,3 +319,146 @@ header.appbar {
 .nav-btn span {
   text-decoration: none;
 }
+
+/* Make logo large without expanding header container */
+.brand-center {
+  position: relative;
+  height: 40px;              /* tingginya tetap kecil agar tidak mendorong teks ke bawah */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;          /* penting supaya logo boleh keluar container */
+}
+
+.brand-center img.brand-logo {
+  position: absolute;         /* ← INI KUNCI UTAMA */
+  top: 50%;
+  transform: translateY(-50%);  /* center secara vertikal */
+  height: 120px;               /* BESARKAN LOGO TANPA BIKIN HEADER IKUT BESAR */
+  object-fit: contain;
+  pointer-events: none;
+}
+/* FORCE header to participate in normal document flow (NOT fixed/sticky) */
+header.appbar,
+.appbar {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: auto !important;
+  z-index: 100 !important; /* boleh tetap, tidak mengganggu flow */
+}
+
+/* if there is inner wrapper that was fixed, reset it too */
+.appbar-inner {
+  position: static !important;
+  transform: none !important;
+}
+
+/* ensure content below header doesn't assume fixed header spacing */
+.title-area, .content, main, .page {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+/* Note di halaman Order Details */
+.order-payment-note {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff8e5;
+  border-radius: 8px;
+  border: 1px solid #ffe0a3;
+  font-size: 12px;
+  color: #8a6d3b;
+  line-height: 1.4;
+}
+
+.order-payment-note .status {
+  margin-top: 4px;
+  color: #c0392b;
+  font-weight: 600;
+}
+/* Address block di dalam Order Details */
+.order-address-block {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  font-size: 12px;
+}
+
+.order-address-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.order-address-head .title {
+  font-weight: 700;
+}
+
+.order-address-body .line-combined {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.order-address-body .line-phone {
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.order-address-body .line-address {
+  line-height: 1.4;
+}
+.order-payment-note {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff8e5;
+  border-radius: 8px;
+  border: 1px solid #ffe0a3;
+  font-size: 12px;
+  color: #8a6d3b;
+  line-height: 1.4;
+}
+
+.order-payment-note .status {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* pending (default) */
+.order-payment-note.pending {
+  background: #fff8e5;
+  border-color: #ffe0a3;
+  color: #8a6d3b;
+}
+.order-payment-note.pending .status {
+  color: #c0392b;
+}
+
+/* PAID */
+.order-payment-note.paid {
+  background: #e9f9ed;
+  border-color: #b8e6c4;
+  color: #1b6b34;
+}
+.order-payment-note.paid .status {
+  color: #1b6b34;
+}
+
+/* REJECTED */
+.order-payment-note.rejected {
+  background: #fdecec;
+  border-color: #f5b7b1;
+  color: #a93226;
+}
+.order-payment-note.rejected .status {
+  color: #a93226;
+}
+
+.order-payment-note .track-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #2e7d32;
+}

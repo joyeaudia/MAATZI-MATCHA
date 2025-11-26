@@ -1,4 +1,4 @@
-/* bagfr.js - cleaned: cart renderer + single liked renderer with heart button */
+/* bagfr.js - cart renderer + likes + checkout */
 (function () {
   'use strict';
 
@@ -11,7 +11,11 @@
     return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+  function escapeHtml(s){
+    return String(s||'').replace(/[&<>"']/g, c=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[c]);
+  }
 
   // ----- storage -----
   function loadCart(){
@@ -25,12 +29,15 @@
   // ----- render cart -----
   function renderCart(){
     const items = loadCart();
-    const container = document.getElementById('bag-items') || document.querySelector('.cart-list') || document.querySelector('.bag-items');
+    const container = document.getElementById('bag-items') ||
+                      document.querySelector('.cart-list') ||
+                      document.querySelector('.bag-items');
     if (!container) return;
     container.innerHTML = '';
 
     if (!items.length){
-      container.innerHTML = '<p class="empty" style="text-align:center;color:#666;padding:18px 0">Keranjang kosong.</p>';
+      container.innerHTML =
+        '<p class="empty" style="text-align:center;color:#666;padding:18px 0">Keranjang kosong.</p>';
       updateSummaryTotal();
       return;
     }
@@ -42,22 +49,27 @@
       const subtotal = Number(it.subtotal || (unit * qty) || 0);
       total += subtotal;
 
-      const addonsHtml = (it.addons && it.addons.length) ? it.addons.map(a => {
-        const rawLabel = String(a.label || '').trim();
-        const hasPriceToken = /\(\s*\+\s*\d+|Rp\b|K\)/i.test(rawLabel);
-        const labelEscaped = escapeHtml(rawLabel);
-        if (hasPriceToken) {
-          return `<div class="addon">${labelEscaped}</div>`;
-        } else {
-          return `<div class="addon">${labelEscaped}${a.price ? ` (+${formatRupiah(a.price)})` : ''}</div>`;
-        }
-      }).join('') : '';
+      const addonsHtml = (it.addons && it.addons.length)
+        ? it.addons.map(a => {
+            const rawLabel = String(a.label || '').trim();
+            const hasPriceToken = /\(\s*\+\s*\d+|Rp\b|K\)/i.test(rawLabel);
+            const labelEscaped = escapeHtml(rawLabel);
+            if (hasPriceToken) {
+              return `<div class="addon">${labelEscaped}</div>`;
+            } else {
+              return `<div class="addon">${labelEscaped}${a.price ? ` (+${formatRupiah(a.price)})` : ''}</div>`;
+            }
+          }).join('')
+        : '';
 
       const imgSrc = escapeHtml(it.image || (it.images && it.images[0]) || 'assets/placeholder.png');
 
       const html = `
         <article class="cart-item" data-idx="${idx}" data-price="${unit}">
-          <div class="thumb"><img src="${imgSrc}" alt="${escapeHtml(it.title||'Product')}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>
+          <div class="thumb">
+            <img src="${imgSrc}" alt="${escapeHtml(it.title||'Product')}"
+                 onerror="this.onerror=null;this.src='assets/placeholder.png'">
+          </div>
           <div class="item-body">
             <div class="item-head">
               <div>
@@ -96,15 +108,18 @@
     let total = Number(precalculated || 0);
     if (!precalculated){
       const items = loadCart();
-      total = items.reduce((s,it) => s + (Number(it.subtotal) || (Number(it.unitPrice||it.price||0) * Number(it.qty||1)) ), 0);
+      total = items.reduce((s,it) =>
+        s + (Number(it.subtotal) ||
+            (Number(it.unitPrice||it.price||0) * Number(it.qty||1)) ), 0);
     }
-    const summaryEl = document.querySelector('.summary-value') || document.getElementById('bag-total') || document.querySelector('.bag-total');
+    const summaryEl = document.querySelector('.summary-value') ||
+                      document.getElementById('bag-total') ||
+                      document.querySelector('.bag-total');
     if (summaryEl) summaryEl.textContent = formatRupiah(total);
   }
 
   // ----- event delegation: qty, remove (cart) -----
   document.addEventListener('click', function(e){
-    // cart item interactions: find cart-item ancestor
     const itemEl = e.target.closest('.cart-item');
     if (!itemEl) return;
 
@@ -113,7 +128,8 @@
 
     if (e.target.closest('.qty-incr')) {
       cart[idx].qty = (Number(cart[idx].qty || 1) + 1);
-      cart[idx].subtotal = Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
+      cart[idx].subtotal =
+        Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
       saveCart(cart);
       renderCart();
       return;
@@ -121,7 +137,8 @@
 
     if (e.target.closest('.qty-decr')) {
       cart[idx].qty = Math.max(1, Number(cart[idx].qty || 1) - 1);
-      cart[idx].subtotal = Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
+      cart[idx].subtotal =
+        Number(cart[idx].unitPrice || cart[idx].price || 0) * cart[idx].qty;
       saveCart(cart);
       renderCart();
       return;
@@ -139,10 +156,16 @@
   function addToBag(productObj){
     if (!productObj || !productObj.id) throw new Error('productObj.id required');
     const cart = loadCart();
-    const sameIdx = cart.findIndex(i => i.id === productObj.id && JSON.stringify(i.addons||[]) === JSON.stringify(productObj.addons||[]));
+    const sameIdx = cart.findIndex(i =>
+      i.id === productObj.id &&
+      JSON.stringify(i.addons||[]) === JSON.stringify(productObj.addons||[])
+    );
     if (sameIdx >= 0){
-      cart[sameIdx].qty = Number(cart[sameIdx].qty || 1) + (Number(productObj.qty) || 1);
-      cart[sameIdx].subtotal = Number(cart[sameIdx].unitPrice || cart[sameIdx].price || 0) * cart[sameIdx].qty;
+      cart[sameIdx].qty =
+        Number(cart[sameIdx].qty || 1) + (Number(productObj.qty) || 1);
+      cart[sameIdx].subtotal =
+        Number(cart[sameIdx].unitPrice || cart[sameIdx].price || 0) *
+        cart[sameIdx].qty;
     } else {
       const qty = Number(productObj.qty||1);
       const unit = Number(productObj.unitPrice || productObj.price || 0);
@@ -162,7 +185,6 @@
     renderCart();
   }
 
-  // expose addToBag globally so product pages can call it
   window.addToBag = addToBag;
   window.renderCart = renderCart;
 
@@ -170,18 +192,24 @@
      LIKES (single clean implementation)
      ------------------------- */
 
-  function loadLikes(){ try { return JSON.parse(localStorage.getItem('likes')||'[]'); } catch(e){ return []; } }
-  function saveLikes(arr){ localStorage.setItem('likes', JSON.stringify(arr||[])); }
+  function loadLikes(){
+    try { return JSON.parse(localStorage.getItem('likes')||'[]'); }
+    catch(e){ return []; }
+  }
+  function saveLikes(arr){
+    localStorage.setItem('likes', JSON.stringify(arr||[]));
+  }
 
-  // Render liked cards: each card has a single heart button
   function renderLikedCards() {
     const likes = loadLikes();
-    const container = document.querySelector('.liked-row') || document.getElementById('liked-row');
+    const container = document.querySelector('.liked-row') ||
+                      document.getElementById('liked-row');
     if (!container) return;
     container.innerHTML = '';
 
     if (!likes.length) {
-      container.innerHTML = '<div style="color:#888;padding:12px">You have no liked items yet.</div>';
+      container.innerHTML =
+        '<div style="color:#888;padding:12px">You have no liked items yet.</div>';
       return;
     }
 
@@ -190,15 +218,24 @@
       const title = String(it.title || '');
       const image = String(it.image || 'assets/placeholder.png');
       const price = Number(it.price || 0);
-      const priceText = price ? ('Rp ' + new Intl.NumberFormat('id-ID').format(price)) : '';
+      const priceText = price
+        ? ('Rp ' + new Intl.NumberFormat('id-ID').format(price))
+        : '';
 
       const article = document.createElement('article');
       article.className = 'like-card';
       article.setAttribute('role','listitem');
       article.setAttribute('data-id', id);
-      article.setAttribute('data-source', it.source || (id.includes('dsri-') ? 'dsri' : (id.includes('drsi-') ? 'drsi' : '')));
+      article.setAttribute(
+        'data-source',
+        it.source || (id.includes('dsri-') ? 'dsri'
+                    : (id.includes('drsi-') ? 'drsi' : ''))
+      );
       article.innerHTML = `
-        <div class="like-thumb"><img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" onerror="this.onerror=null;this.src='assets/placeholder.png'"></div>
+        <div class="like-thumb">
+          <img src="${escapeHtml(image)}" alt="${escapeHtml(title)}"
+               onerror="this.onerror=null;this.src='assets/placeholder.png'">
+        </div>
 
         <div class="like-body">
           <div class="like-title">${escapeHtml(title)}</div>
@@ -206,32 +243,30 @@
 
         <div class="like-footer">
           ${priceText ? `<div class="like-price footer-price">${escapeHtml(priceText)}</div>` : ''}
-          <button class="like-heart" aria-label="Unlike" title="Unlike" data-id="${escapeHtml(id)}" aria-pressed="false">❤</button>
+          <button class="like-heart" aria-label="Unlike" title="Unlike"
+                  data-id="${escapeHtml(id)}" aria-pressed="false">❤</button>
         </div>
       `;
       container.appendChild(article);
     });
   }
 
-
-  // single delegated handler for like-heart + card navigation
   document.addEventListener('click', function(e){
-    // handle heart (unlike) - prevent navigation when clicking heart
     const heart = e.target.closest('.like-heart');
     if (heart) {
-      // visual pressed state
       heart.setAttribute('aria-pressed', 'true');
       heart.classList.add('like-heart-pressed');
 
       const id = heart.dataset.id;
       if (id) {
-        // short delay so user sees color change
         setTimeout(() => {
           let likes = loadLikes();
           likes = likes.filter(x => String(x.id) !== String(id));
           saveLikes(likes);
           renderLikedCards();
-          window.dispatchEvent(new CustomEvent('likes:updated', { detail: { likes } }));
+          window.dispatchEvent(
+            new CustomEvent('likes:updated', { detail: { likes } })
+          );
         }, 180);
       } else {
         setTimeout(renderLikedCards, 180);
@@ -240,82 +275,93 @@
       return;
     }
 
-    // navigate to product page when clicking card body
     const card = e.target.closest('.like-card');
     if (card) {
-      // prefer explicit data-id attribute
       let id = card.getAttribute('data-id') || card.dataset.id || null;
-      const source = (card.getAttribute('data-source') || card.dataset.source || '').toLowerCase() || null;
+      const source = (card.getAttribute('data-source') ||
+                      card.dataset.source || '').toLowerCase() || null;
 
-      // fallback: try to resolve id from likes storage by matching title or image
       if (!id) {
         try {
           const likes = JSON.parse(localStorage.getItem('likes')||'[]');
           const title = card.querySelector('.like-title')?.textContent?.trim();
           const img = card.querySelector('.like-thumb img')?.src;
-          const found = likes.find(x => (x.title && x.title === title) || (x.image && x.image === img));
+          const found = likes.find(x =>
+            (x.title && x.title === title) ||
+            (x.image && x.image === img)
+          );
           if (found && found.id) id = found.id;
-        } catch(err){
-          // ignore parse errors
-        }
+        } catch(err){}
       }
 
       if (!id) {
-        // avoid opening template without id; notify user
         alert('Tidak dapat menemukan id produk untuk kartu ini.');
         return;
       }
 
-      // determine page by source (use fallback rules)
-      let page = './drsi.html'; // default
+      let page = './drsi.html';
       if (source === 'dsri') page = './dsri.html';
       else if (source === 'bsri') page = './bsri.html';
       else {
-        // try to infer source from id prefix
         if (id.startsWith('dsri-')) page = './dsri.html';
         else if (id.startsWith('drsi-')) page = './drsi.html';
       }
-
-      // choose whether to strip prefix or not depending on your loader
-      // If your product page expects raw id (without prefix), uncomment next line:
-      // id = id.replace(/^[a-z0-9]+-/, '');
 
       window.location.assign(`${page}?id=${encodeURIComponent(String(id))}`);
     }
   });
 
-  // Initialize renders on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function(){
     renderCart();
     renderLikedCards();
   });
 
-  // allow other parts to request re-render
   window.addEventListener('likes:updated', renderLikedCards);
 
-}
-)();
+})();  // end first IIFE
+
+
 // ===== Checkout -> create order & redirect to order.html =====
-(function(){
+(function () {
+  'use strict';
+
+  // ID random: 5 huruf (A-Z,a-z) + 4 angka
   function genOrderId() {
-    return 'ORD-' + new Date().toISOString().slice(0,10) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let part1 = '';
+    for (let i = 0; i < 5; i++) {
+      part1 += letters[Math.floor(Math.random() * letters.length)];
+    }
+    let part2 = '';
+    for (let i = 0; i < 4; i++) {
+      part2 += Math.floor(Math.random() * 10);
+    }
+    return part1 + part2; // contoh: aZkRt4932
   }
 
-  function loadCartSafe(){ try { return JSON.parse(localStorage.getItem('cart')||'[]'); } catch(e){ return []; } }
-  function saveOrders(arr){ localStorage.setItem('orders', JSON.stringify(arr||[])); }
-  function loadOrders(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } }
+  function loadCartSafe(){
+    try { return JSON.parse(localStorage.getItem('cart')||'[]'); }
+    catch(e){ return []; }
+  }
+  function saveOrders(arr){
+    localStorage.setItem('orders', JSON.stringify(arr || []));
+  }
+  function loadOrders(){
+    try { return JSON.parse(localStorage.getItem('orders')||'[]'); }
+    catch(e){ return []; }
+  }
 
   // build a minimal order object from cart
   function buildOrderFromCart() {
     const cart = loadCartSafe();
     if (!cart.length) return null;
+
     let total = 0;
     const items = cart.map(it => {
       const unit = Number(it.unitPrice || it.price || 0);
       const qty = Number(it.qty || 1);
-      const subtotal = Number(it.subtotal || (unit * qty) || (unit*qty));
+      const subtotal = Number(it.subtotal || (unit * qty) || (unit * qty));
       total += subtotal;
-      // keep addons array as-is (if present)
       return {
         id: it.id,
         title: it.title,
@@ -330,13 +376,14 @@
     return {
       id: genOrderId(),
       createdAt: Date.now(),
-      status: 'active', // you can change to 'pending' etc
+      status: 'active',
+      paymentStatus: 'pending', // dibaca user & admin
       total: total,
       items: items
     };
   }
 
-  // attach handler to .checkout button (delegated in case button created later)
+  // klik tombol Checkout
   document.addEventListener('click', function(e){
     const btn = e.target.closest && e.target.closest('.checkout');
     if (!btn) return;
@@ -348,90 +395,31 @@
       return;
     }
 
-    // save order at front of orders list
     const orders = loadOrders();
     orders.unshift(order);
     saveOrders(orders);
 
-    // clear cart (optional). If you want to keep cart, remove these two lines.
+    // kosongkan cart
     localStorage.removeItem('cart');
-    // re-render current bag UI
-    if (typeof renderCart === 'function') renderCart();
+    if (typeof window.renderCart === 'function') window.renderCart();
 
-    // redirect to orders page (active tab). Pass order id for convenience.
-    // order.html will read localStorage['orders'] to render.
+    // redirect ke orders page
     window.location.href = './order.html?order=' + encodeURIComponent(order.id);
   });
-  function renderOrdersList() {
-  const orders = (function(){ try { return JSON.parse(localStorage.getItem('orders')||'[]'); } catch(e){ return []; } })();
-  const activePanel = document.getElementById('tab-active');
-  if (!activePanel) return;
-  activePanel.innerHTML = '';
 
-  if (!orders.length) {
-    activePanel.innerHTML = '<div style="padding:16px;color:#666">Belum ada pesanan.</div>';
-    return;
-  }
-
-  // newest order
-  const order = orders[0];
-  const first = order.items && order.items[0];
-  if (!first) {
-    activePanel.innerHTML = '<div style="padding:16px;color:#666">Order data tidak lengkap.</div>';
-    return;
-  }
-  const moreCount = Math.max(0, order.items.length - 1);
-
-  // Determine brand/category (Desserts / Drinks) from first.id (prefix heuristics)
-  let brand = '';
-  const idLower = String(first.id||'').toLowerCase();
-  if (idLower.startsWith('dsri') || idLower.startsWith('dessert') || idLower.includes('dessert')) brand = 'Desserts';
-  else if (idLower.startsWith('drsi') || idLower.startsWith('drink') || idLower.includes('drink')) brand = 'Drinks';
-  else brand = 'Products';
-
-  const imgHtml = first.image ? `<img src="${escapeHtml(first.image)}" alt="${escapeHtml(first.title)}" style="width:68px;height:68px;object-fit:cover;border-radius:8px">` : `<div class="thumb"></div>`;
-
-  const article = document.createElement('article');
-  article.className = 'order-card';
-  article.innerHTML = `
-    <div class="thumb">${imgHtml}</div>
-    <div class="order-info">
-      <div class="order-top">
-        <h3 class="product-title">${escapeHtml(first.title)}</h3>
-        <span class="more">${moreCount > 0 ? '+'+moreCount + ' More' : ''}</span>
-      </div>
-      <p class="brand">${escapeHtml(brand)}</p>
-      <div class="status-row">
-        <span class="status">Status : <strong>${escapeHtml(order.status)}</strong></span>
-        <span class="eta">Created : <em>${new Date(order.createdAt).toLocaleString()}</em></span>
-      </div>
-      <div class="order-actions">
-        <button class="btn-outline" data-order-id="${escapeHtml(order.id)}">Track Order</button>
-        <button class="btn-light" data-order-id="${escapeHtml(order.id)}">View Details</button>
-      </div>
-    </div>
-  `;
-  activePanel.appendChild(article);
-
-  // delegate view details
-  activePanel.querySelectorAll('[data-order-id]').forEach(b=>{
-    b.addEventListener('click', function(ev){
-      const id = this.dataset.orderId;
-      if (!id) return;
-      renderOrderDetails(id);
-    });
+  // gift-toggle: navigate to gif.html
+  document.addEventListener('click', function(e){
+    const tg = e.target.closest && e.target.closest('.gift-toggle');
+    if (!tg) return;
+    const pressed = tg.getAttribute('aria-pressed') === 'true';
+    tg.setAttribute('aria-pressed', pressed ? 'false' : 'true');
+    try {
+      tg.animate(
+        [{ transform:'scale(1)' }, { transform:'scale(1.06)' }, { transform:'scale(1)' }],
+        { duration: 180 }
+      );
+    } catch(err){}
+    window.location.href = 'gif.html';
   });
-}
-// gift-toggle: navigate to gif.html (placed in bagfr.js)
-document.addEventListener('click', function(e){
-  const tg = e.target.closest && e.target.closest('.gift-toggle');
-  if (!tg) return;
-  // toggle visual pressed state
-  const pressed = tg.getAttribute('aria-pressed') === 'true';
-  tg.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-  try { tg.animate([{ transform:'scale(1)' }, { transform:'scale(1.06)' }, { transform:'scale(1)' }], { duration: 180 }); } catch(e){}
-  // open gift page
-  window.location.href = 'gif.html';
-});
 
-})();
+})();  // end checkout IIFE

@@ -1,0 +1,138 @@
+:root{
+  --bg:#f4f4f7;
+  --card:#ffffff;
+  --accent:#007aff;
+  --danger:#e74c3c;
+  --muted:#7b7b8a;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Rasa', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:var(--bg);
+}
+
+.admin-shell{
+  max-width:480px;
+  margin:0 auto;
+  padding:16px;
+}
+
+.admin-header h1{
+  margin:0;
+  font-size:20px;
+}
+.subtitle{
+  margin:4px 0 12px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.admin-content{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* order card */
+.admin-order-card{
+  background:var(--card);
+  border-radius:12px;
+  padding:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.05);
+  border:1px solid #eee;
+  font-size:13px;
+}
+
+.admin-order-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+}
+.admin-order-id{
+  font-weight:700;
+}
+.admin-order-created{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.admin-status-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:6px 0;
+}
+.badge{
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:11px;
+}
+.badge-status{
+  background:#eef;
+  color:#334;
+}
+.badge-payment{
+  background:#fff8e5;
+  color:#8a6d3b;
+}
+.badge-payment.paid{
+  background:#e9f9ed;
+  color:#1b6b34;
+}
+.badge-payment.rejected{
+  background:#fdecec;
+  color:#a93226;
+}
+
+.admin-address{
+  margin:6px 0 8px;
+  line-height:1.4;
+}
+.admin-address-title{
+  font-weight:600;
+  margin-bottom:2px;
+  font-size:12px;
+}
+.admin-address-main{
+  font-size:12px;
+}
+
+.admin-items{
+  margin-top:4px;
+  border-top:1px solid #f0f0f0;
+  padding-top:4px;
+}
+.admin-items div{
+  font-size:12px;
+}
+
+/* buttons */
+.admin-actions{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.btn{
+  border-radius:999px;
+  border:1px solid transparent;
+  padding:6px 10px;
+  font-size:12px;
+  cursor:pointer;
+}
+.btn-approve{
+  background:var(--accent);
+  color:#fff;
+}
+.btn-reject{
+  background:#fff;
+  color:var(--danger);
+  border-color:rgba(231,76,60,0.6);
+}
+.btn-details{
+  background:#f5f5f8;
+  color:#444;
+}
