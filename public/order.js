@@ -275,17 +275,27 @@
         '<div>Status pesanan: <strong>Pesanan ' + escapeHtml(order.id || '') + ' sudah dibayar.</strong></div>' +
         '<div class="status">Pembayaran sudah diterima admin ✅</div>' +
         '<div class="track-hint">Anda dapat men-track order Anda dari halaman Orders / Active.</div>';
-    } else if (isRejected) {
-      noteClass = 'rejected';
-      noteHtml =
-        '<div>Status pesanan: <strong>Pesanan ' + escapeHtml(order.id || '') + ' ditolak / dibatalkan.</strong></div>' +
-        '<div class="status">Pembayaran tidak diterima admin.</div>';
-    } else {
+    } 
+    
+else if (isRejected) {
+  note.innerHTML =
+    '<div style="font-weight:600">⛔ Orderan ini dicancel oleh admin</div>' +
+    '<div class="status">Status pembayaran: <strong style="color:#c00">Ditolak admin</strong></div>' +
+    '<div class="track-hint" style="color:#c00">Silakan hubungi admin jika ada kesalahan.</div>';
+}
+ 
+    else {
       noteClass = 'pending';
       noteHtml =
         '<div>Segera melakukan pembayaran melalui WhatsApp kepada toko agar orderan Anda dapat di-ACC.</div>' +
         '<div class="status">Status pembayaran: <strong>Pembayaran belum diterima admin</strong></div>';
     }
+  
+    
+  if (isRejected || order.status === 'cancelled') {
+  const cancelBtn = panel.querySelector('.btn-cancel-order');
+  if (cancelBtn) cancelBtn.remove();
+}
 
     note.className = 'order-payment-note ' + noteClass;
     note.innerHTML = noteHtml;

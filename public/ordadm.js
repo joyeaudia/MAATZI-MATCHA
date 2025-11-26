@@ -1,4 +1,4 @@
-// admin.js — simple admin view for orders
+// ordadm.js — simple admin view for orders
 (function(){
   'use strict';
 
@@ -23,23 +23,29 @@
     return safeParse('orders');
   }
 
+  // ===== LIST DI HALAMAN ADMIN =====
   function renderAdminList(){
     const container = document.getElementById('admin-content');
     if (!container) return;
     container.innerHTML = '';
 
-    const orders = loadOrders();
+    let orders = loadOrders() || [];
+
+    // ⛔ JANGAN tampilkan order yg sudah dibatalkan
+    orders = orders.filter(o => String(o.status || '').toLowerCase() !== 'cancelled');
+
     if (!orders.length){
       container.innerHTML = '<div style="color:#777;font-size:13px;">Belum ada order.</div>';
       return;
     }
 
-    // optional: terbaru di atas
-    orders.slice().reverse().forEach(order => {
+    // terbaru di atas (karena di bagfr.js kita pakai unshift)
+    orders.forEach(order => {
       container.appendChild(renderAdminCard(order));
     });
   }
 
+  // ===== SATU KARTU ADMIN =====
   function renderAdminCard(order){
     const card = document.createElement('article');
     card.className = 'admin-order-card';
@@ -135,10 +141,10 @@
         const idx = all.findIndex(o => String(o.id) === String(id));
         if (idx !== -1){
           all[idx].paymentStatus = 'rejected';
-          all[idx].status = 'cancelled';
+          all[idx].status = 'cancelled';   // <== status cancelled
           saveOrders(all);
-          renderAdminList();
-          alert('Order telah DITOLAK / dibatalkan.');
+          renderAdminList();               // <== re-render, dan karena difilter, kartu hilang
+          alert('Order telah DITOLAK / dibatalkan oleh admin.');
         }
       });
     }
