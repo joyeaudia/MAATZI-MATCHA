@@ -28,15 +28,7 @@ body{
 }
 
 /* Screen sekarang di-center horizontal dan boleh tinggi > viewport */
-.screen {
-  width:100%;
-  max-width:var(--maxw);
-  margin:0 auto;
-  box-sizing:border-box;
-  /* PENTING: padding-top wajib agar konten turun dari header fixed */
-  padding-top: var(--appbar-height);
-  padding-bottom: 20px;
-}
+
 
 /* topbar */
 .topbar{
@@ -59,7 +51,7 @@ body{
 /* main content/card */
 .content{
   display:flex;
-  margin-top: 60px;
+  margin-top: 20px;
   flex-direction:column;
   gap:12px;
 }
@@ -162,7 +154,7 @@ body{
 .product .left{
   display:flex;
   align-items:center;
-  gap:16px;
+  gap:10px;
   min-width: 0; /* allow text to ellipsis */
 }
 
@@ -354,17 +346,16 @@ body{
 /* ===== Appbar (centered brand text inside rounded card) ===== */
 /* ===== Appbar (BY VERENT) — fix: mepet ke atas ===== */
 header.appbar {
-  position: fixed;              /* ⬅️ tempelkan ke atas layar */
-  top: 0;                       /* mepet banget di atas */
-  left: 50%;
-  transform: translateX(-50%);
+  position: static;         /* ⬅️ sekarang ikut scroll biasa */
   width: 100%;
-  max-width: 412px;             /* ukuran device */
+  max-width: 412px;
+  margin: 0 auto;
   background: transparent;
   display: flex;
   justify-content: center;
-  z-index: 100;                 /* pastikan di atas konten */
+  z-index: -10;              /* boleh kecil, nggak masalah */
 }
+
 
 /* isi putihnya */
 .appbar-inner {
@@ -428,3 +419,90 @@ header.appbar {
   margin-top: 96px; /* kasih ruang sesuai tinggi header */
   padding: 8px 12px;
 }
+
+
+.brand-center{
+  text-align:center;
+}
+
+/* box-nya tetap kecil, tapi gambarnya di-zoom */
+.brand-logo{
+  height:28px;              /* jangan dibesarin lagi */
+  object-fit:contain;
+  display:block;
+  margin:0 auto;
+  transform: scale(3.5);    /* atur 1.2 / 1.3 / 1.5 sesuai selera */
+  transform-origin:center;
+}
+
+.screen {
+  max-width: 430px;
+  margin: 0 auto;
+  /* JANGAN pakai height: 100vh supaya bisa lebih tinggi dari layar */
+  min-height: 100vh;
+  /* ga perlu flex di sini, cukup block biasa */
+  display: block;
+}
+
+.content {
+  padding: 1px;
+  /* penting: biar ngikut scroll page, bukan scroll area sendiri */
+  overflow: visible;   /* atau hapus properti overflow-y kalau ada */
+  /* juga boleh hapus flex:1 kalau ada */
+}
+.appbar {
+  position: static;  /* atau cukup hapus baris position & top */
+}
+
+/* layout item dalam Order Items */
+.product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  min-height: 64px; /* biar space cukup */
+}
+
+/* Qty bubble fix */
+.product .qty {
+  background: #fff;
+  border: 1px solid #e5e5e8;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #333;
+  position: absolute;
+  right: 10px;       /* selalu di kanan dalam card */
+  bottom: 10px;      /* turun kebawah dikit */
+}
+
+.thumb {
+  width: 60px; /* sebelumnya 64px (lebih kecil & lebih rapi) */
+  height: 60px;
+  border-radius: 12px;
+  background: #f6f6f8;
+  overflow: hidden;
+  flex-shrink: 0; /* gambar jangan mengecil */
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pname {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;   /* maks 2 baris */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pinfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 0; /* pastikan tidak ada margin tak terlihat */
+}
+

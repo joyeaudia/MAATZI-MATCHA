@@ -14,98 +14,65 @@
   <div class="screen">
 <header class="appbar" role="banner">
   <div class="appbar-inner" aria-hidden="false">
-    <div class="brand-center" aria-hidden="true" style="pointer-events:none;">
-      <span class="by">BY</span>
-      <span class="name">VERENT</span>
+    <div class="brand-center">
+      <img src="logos/lg3.png" alt="Verent" class="brand-logo">
     </div>
 
     <button class="icon-bell" aria-label="Notifications" type="button">
-      <!-- gunakan bell.svg atau bell.png -->
-      <img src="bell.png" alt="Notifications">
+      <img src="acs/lcng.png" alt="Notifications">
     </button>
   </div>
-
-  <!-- optional — hapus kalau mau tanpa garis ungu -->
   <div class="appbar-underline" aria-hidden="true"></div>
 </header>
 
-    <main class="content">
-      <section class="card order-card">
-        <h2 class="card-title">Order Details</h2>
-        <p class="muted">Keep track of your package from processing to delivery.</p>
 
-        <div class="status-pill shipped">Shipped</div>
-
-        <div class="meta">
-          <div><strong>Order ID</strong> : AA11020251</div>
-          <div><strong>Order Date</strong> : 16 October 2025</div>
           <div><strong>Scheduled Delivery</strong> : 30 October 2025</div>
-          <div><strong>Payment Method</strong> : QRIS</div>
-        </div>
+    <main class="content">
+      
+<section class="card order-card">
+  <h2 class="card-title">Order Details</h2>
+  <p class="muted">Keep track of your package from processing to delivery.</p>
 
-        <hr/>
+  <div class="status-pill shipped" id="detail-status-pill">Active</div>
 
-        <h3 class="section-title">Order Items</h3>
-
-        <div class="product">
-          <div class="thumb"></div>
-          <div class="pinfo">
-            <div class="pname">Polkadot Top</div>
-            <div class="psub">Affinite Attire</div>
-            <div class="price">Rp 159.000</div>
-          </div>
-          <div class="qty">1</div>
-        </div>
-
-        <div class="product">
-          <div class="thumb"></div>
-          <div class="pinfo">
-            <div class="pname">Polkadot Top</div>
-            <div class="psub">Affinite Attire</div>
-            <div class="price">Rp 159.000</div>
-          </div>
-          <div class="qty">1</div>
-        </div>
-
-<h3 class="section-title">Summary</h3>
-
-<div class="summary">
-  <div class="summary-row">
-    <div class="left">Product Subtotal</div>
-    <div class="right">Rp 204.000,00</div>
+  <div class="meta">
+    <div><strong>Order ID</strong> : <span id="detail-order-id">-</span></div>
+    <div><strong>Order Date</strong> : <span id="detail-order-date">-</span></div>
+    <div><strong>Scheduled Delivery</strong> : <span id="detail-scheduled">-</span></div>
+    <div><strong>Payment Method</strong> : <span id="detail-payment-method">-</span></div>
   </div>
-  <div class="summary-row">
-    <div class="left">Shipping Fee</div>
-    <div class="right">Rp 50.000,00</div>
+
+  <hr/>
+
+  <h3 class="section-title">Order Items</h3>
+  <div id="detail-items"></div>
+
+  <h3 class="section-title">Summary</h3>
+  <div class="summary" id="detail-summary"></div>
+
+  <hr/>
+
+  <h3 class="section-title">Delivery Tracking</h3>
+  <table class="tracking">
+    <tbody>
+      <tr><td>Order Placed</td><td class="status" id="track-placed">-</td></tr>
+      <tr><td>Payment Confirmed</td><td class="status" id="track-payment">-</td></tr>
+      <tr><td>Waiting for Schedule</td><td class="status" id="track-wait">-</td></tr>
+      <tr><td>Preparing Order</td><td class="status" id="track-prep">-</td></tr>
+      <tr><td>Out for Delivery</td><td class="status" id="track-out">-</td></tr>
+      <tr><td>Delivered</td><td class="status" id="track-delivered">-</td></tr>
+    </tbody>
+  </table>
+
+  <div class="gift">
+    <strong>Gift Message</strong> <a href="#" class="view-link">View Details</a>
   </div>
-  <div class="summary-row total">
-    <div class="left">Order Total</div>
-    <div class="right">Rp 254.000,00</div>
+
+  <div class="actions">
+    <button class="cancel" id="detail-cancel-btn">Cancel Order</button>
   </div>
-</div>
+</section>
 
-        <hr/>
-
-        <h3 class="section-title">Delivery Tracking</h3>
-        <table class="tracking">
-          <tbody>
-            <tr><td>Order Placed</td><td class="status done">Completed</td></tr>
-            <tr><td>Payment Confirmed</td><td class="status done">Completed</td></tr>
-            <tr><td>Waiting for Schedule</td><td class="status upcoming">Upcoming</td></tr>
-            <tr><td>Preparing Order</td><td class="status not">Not Started</td></tr>
-            <tr><td>Out for Delivery</td><td class="status not">—</td></tr>
-            <tr><td>Delivered</td><td class="status not">—</td></tr>
-          </tbody>
-        </table>
-
-        <div class="gift">
-          <strong>Gift Message</strong> <a href="#" class="view-link">View Details</a>
-        </div>
-
-        <div class="actions">
-          <button class="cancel">Cancel Order</button>
-        </div>
-      </section>
 
       <aside class="help">
         <div class="help-box">
@@ -128,5 +95,6 @@
       <div class="small-note">© Verent</div>
     </footer>
   </div>
+  <script src="ditel.js"></script>
 </body>
 </html>

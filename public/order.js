@@ -74,12 +74,24 @@
       '  </div>' +
       '</div>';
 
+    // tombol View Details (di dalam page order)
     article.querySelectorAll('.view-details').forEach(btn => {
       btn.addEventListener('click', function () {
         renderOrderDetails(this.dataset.orderId);
       });
     });
+
+    // tombol Track Order -> pindah ke halaman detail (ditel.html?id=...)
+    article.querySelectorAll('.btn-outline').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const id = this.dataset.orderId;
+        if (!id) return;
+        window.location.href = 'ditel.html?id=' + encodeURIComponent(id);
+      });
+    });
+
     return article;
+
   }
 
   // ===== ACTIVE tab =====
@@ -137,38 +149,33 @@
   }
 
   // ===== HISTORY tab =====
-  function renderHistory() {
-    const panel = document.getElementById('tab-history');
-    if (!panel) return;
-    panel.innerHTML = '';
+// ===== HISTORY tab =====
+// ===== HISTORY tab =====
+function renderHistory() {
+  const panel = document.getElementById('tab-history');
+  if (!panel) return;
+  panel.innerHTML = '';
 
-    const orders = loadOrders();
-    const hist = (orders || []).filter(o => {
-      const st = String(o.status || '').toLowerCase();
-      if (st === 'active' || st === 'scheduled' || st === '') return false;
-      return true;
-    });
+  const orders = loadOrders() || [];
 
-    if (!hist.length) {
-      const fallback = (orders || []).filter(o => {
-        try {
-          return (Date.now() - Number(o.createdAt || 0)) > 24 * 60 * 60 * 1000;
-        } catch (e) {
-          return false;
-        }
-      });
-
-      if (fallback.length) {
-        fallback.forEach(o => panel.appendChild(renderOrderCardSummary(o)));
-        return;
-      }
-
-      panel.innerHTML = '<div style="padding:16px;color:#666">History kosong.</div>';
-      return;
-    }
-
-    hist.forEach(o => panel.appendChild(renderOrderCardSummary(o)));
+  // History = semua order yang pernah ada (riwayat),
+  // supaya tidak ada order yang "hilang".
+  if (!orders.length) {
+    panel.innerHTML = '<div style="padding:16px;color:#666">History kosong.</div>';
+    return;
   }
+
+  orders.forEach(o => {
+    panel.appendChild(renderOrderCardSummary(o));
+  });
+}
+
+
+
+
+
+
+  
 
   // ===== DETAIL VIEW =====
   function renderOrderDetails(orderId) {
