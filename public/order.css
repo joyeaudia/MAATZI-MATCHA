@@ -462,3 +462,25 @@ header.appbar,
   font-size: 11px;
   color: #2e7d32;
 }
+/* titik merah di atas lonceng */
+.icon-bell {
+  position: absolute; /* sudah ada, gapapa double */
+}
+
+/* bulatan merah kecil */
+.icon-bell-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff3b30;        /* merah iOS style */
+  box-shadow: 0 0 0 2px #fff; /* biar ada border putih tipis */
+  display: none;              /* default: disembunyiin */
+}
+
+/* kalau ada notif, JS akan kasih class ini */
+.icon-bell-badge.show {
+  display: block;
+}

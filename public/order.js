@@ -83,7 +83,6 @@
   }
 
   // ===== ACTIVE tab =====
-  // tampilkan SEMUA order yang status-nya 'active' (atau belum punya status)
   function renderActive() {
     const panel = document.getElementById('tab-active');
     if (!panel) return;
@@ -147,7 +146,7 @@
     const hist = (orders || []).filter(o => {
       const st = String(o.status || '').toLowerCase();
       if (st === 'active' || st === 'scheduled' || st === '') return false;
-      return true; // delivered / shipped / completed / cancelled dsb
+      return true;
     });
 
     if (!hist.length) {
@@ -212,8 +211,8 @@
         '    <div style="font-weight:700">' + escapeHtml(it.title) + '</div>' +
         (it.addons && it.addons.length
           ? '<div style="color:#666;margin-top:6px">' +
-            it.addons.map(a => escapeHtml(a.label)).join(', ') +
-            '</div>'
+          it.addons.map(a => escapeHtml(a.label)).join(', ') +
+          '</div>'
           : '') +
         '    <div style="color:#666;margin-top:6px">' +
         (it.qty || 0) + ' × ' + fmt(it.unitPrice) +
@@ -227,7 +226,7 @@
 
     panel.appendChild(list);
 
-    // ===== address block (pakai default dari savedAddresses_v1) =====
+    // ===== address block =====
     const savedAddrs = safeParse('savedAddresses_v1');
     let chosenAddr = null;
     if (Array.isArray(savedAddrs) && savedAddrs.length) {
@@ -239,7 +238,7 @@
       addrBlock.className = 'order-address-block';
 
       const label = escapeHtml(chosenAddr.label || '');
-      const name  = escapeHtml(chosenAddr.name || '');
+      const name = escapeHtml(chosenAddr.name || '');
       const phone = escapeHtml(chosenAddr.phone || '');
       const addrHtml = escapeHtml(chosenAddr.address || '').replace(/\n/g, '<br>');
 
@@ -275,30 +274,22 @@
         '<div>Status pesanan: <strong>Pesanan ' + escapeHtml(order.id || '') + ' sudah dibayar.</strong></div>' +
         '<div class="status">Pembayaran sudah diterima admin ✅</div>' +
         '<div class="track-hint">Anda dapat men-track order Anda dari halaman Orders / Active.</div>';
-    } 
-    
-else if (isRejected) {
-  note.innerHTML =
-    '<div style="font-weight:600">⛔ Orderan ini dicancel oleh admin</div>' +
-    '<div class="status">Status pembayaran: <strong style="color:#c00">Ditolak admin</strong></div>' +
-    '<div class="track-hint" style="color:#c00">Silakan hubungi admin jika ada kesalahan.</div>';
-}
- 
-    else {
+    } else if (isRejected) {
+      note.innerHTML =
+        '<div style="font-weight:600">⛔ Orderan ini dicancel oleh admin</div>' +
+        '<div class="status">Status pembayaran: <strong style="color:#c00">Ditolak admin</strong></div>' +
+        '<div class="track-hint" style="color:#c00">Silakan hubungi admin jika ada kesalahan.</div>';
+    } else {
       noteClass = 'pending';
       noteHtml =
         '<div>Segera melakukan pembayaran melalui WhatsApp kepada toko agar orderan Anda dapat di-ACC.</div>' +
         '<div class="status">Status pembayaran: <strong>Pembayaran belum diterima admin</strong></div>';
     }
-  
-    
-  if (isRejected || order.status === 'cancelled') {
-  const cancelBtn = panel.querySelector('.btn-cancel-order');
-  if (cancelBtn) cancelBtn.remove();
-}
 
-    note.className = 'order-payment-note ' + noteClass;
-    note.innerHTML = noteHtml;
+    if (!isRejected) {
+      note.className = 'order-payment-note ' + noteClass;
+      note.innerHTML = noteHtml;
+    }
     panel.appendChild(note);
 
     // total
@@ -327,22 +318,47 @@ else if (isRejected) {
 
     const cancelBtn = back.querySelector('.btn-cancel-order');
     if (cancelBtn) {
-      cancelBtn.addEventListener('click', function () {
-        const ok = confirm('Yakin ingin membatalkan order ini?');
-        if (!ok) return;
+      // kalau sudah cancelled ATAU sudah dibayar, jangan tampilkan tombol cancel lagi
+      if (isRejected || isPaid) {
+        cancelBtn.remove();
+      } else {
+        cancelBtn.addEventListener('click', function () {
+          const ok = confirm('Yakin ingin membatalkan order ini?');
+          if (!ok) return;
 
-        const all = loadOrders() || [];
-        const idx = all.findIndex(o => String(o.id) === String(orderId));
-        if (idx !== -1) {
-          all[idx].status = 'cancelled';
-          all[idx].paymentStatus = 'rejected';
-          saveOrders(all);
-        }
-        renderAllLists();
-        alert('Order telah dibatalkan. Status: cancelled');
-      });
+          const all = loadOrders() || [];
+          const idx = all.findIndex(o => String(o.id) === String(orderId));
+          if (idx !== -1) {
+            all[idx].status = 'cancelled';
+            all[idx].paymentStatus = 'rejected';
+            saveOrders(all);
+          }
+          renderAllLists();
+          alert('Order telah dibatalkan. Status: cancelled');
+        });
+      }
+    }
+
+  }
+
+  // ===== BADGE NOTIF DI LONCENG =====
+  // ===== BADGE NOTIF DI LONCENG =====
+  function updateNotifBadge() {
+    const badge = document.getElementById('notif-badge');
+    if (!badge) return;
+
+    const notifs = safeParse('notifications_v1'); // sama key dengan notif.js
+
+    // cuma hitung notif yang belum dibaca
+    const hasUnread = Array.isArray(notifs) && notifs.some(n => !n.isRead);
+
+    if (hasUnread) {
+      badge.classList.add('show');    // 🔴 munculin titik merah
+    } else {
+      badge.classList.remove('show'); // sembunyiin kalau semua sudah dibaca / kosong
     }
   }
+
 
   // ===== RENDER SEMUA TAB =====
   function renderAllLists() {
@@ -388,6 +404,16 @@ else if (isRejected) {
     try {
       renderAllLists();
       attachTabHandlers();
+
+      // cek notif sekali waktu page load
+      updateNotifBadge();
+
+      // kalau localStorage notif berubah dari tab lain, update juga
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'notifications_v1') {
+          updateNotifBadge();
+        }
+      });
     } catch (e) {
       console.error('order render error', e);
     }
@@ -396,4 +422,5 @@ else if (isRejected) {
   // expose for debugging
   window.renderAllOrders = renderAllLists;
   window.renderOrderDetails = renderOrderDetails;
+  window.updateNotifBadge = updateNotifBadge;
 })();
