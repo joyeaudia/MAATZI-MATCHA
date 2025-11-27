@@ -22,6 +22,37 @@
     }[c]));
   }
 
+    // load & save orders
+  function loadOrders() {
+    return safeParse('orders');
+  }
+  function saveOrders(list) {
+    try {
+      localStorage.setItem('orders', JSON.stringify(list || []));
+    } catch (e) {
+      console.error('Failed to save orders', e);
+    }
+  }
+
+  // ===== BAG (keranjang) =====
+// ===== BAG (keranjang) =====
+function loadBag() {
+  try {
+    return JSON.parse(localStorage.getItem('cart') || '[]');  // SAMA seperti loadCart di bagfr.js
+  } catch (e) {
+    return [];
+  }
+}
+function saveBag(list) {
+  try {
+    localStorage.setItem('cart', JSON.stringify(list || []));
+  } catch (e) {
+    console.error('Failed to save bag items', e);
+  }
+}
+
+
+
   // load & save orders
   function loadOrders() {
     return safeParse('orders');
@@ -44,7 +75,11 @@
   }
 
   // ===== card summary renderer (dipakai di semua tab) =====
-  function renderOrderCardSummary(order) {
+  // ===== card summary renderer (dipakai di semua tab) =====
+  function renderOrderCardSummary(order, opts) {
+    const ctx = (opts && opts.context) || '';   // 'active' / 'scheduled' / 'history'
+    const isHistory = ctx === 'history';
+
     const first = order.items && order.items[0];
     const moreCount = Math.max(0, (order.items || []).length - 1);
     const brand = first ? guessBrand(first) : 'Products';
@@ -53,6 +88,10 @@
       : '<div class="thumb"></div>';
     const status = order.status || 'active';
     const created = new Date(order.createdAt || Date.now()).toLocaleString();
+
+    // label & class tombol kedua
+    const secondLabel = isHistory ? 'Reorder' : 'View Details';
+    const secondClass = isHistory ? 'reorder-btn' : 'view-details';
 
     const article = document.createElement('article');
     article.className = 'order-card';
@@ -70,16 +109,29 @@
       '  </div>' +
       '  <div class="order-actions">' +
       '    <button class="btn-outline" data-order-id="' + escapeHtml(order.id) + '">Track Order</button>' +
-      '    <button class="btn-light view-details" data-order-id="' + escapeHtml(order.id) + '">View Details</button>' +
+      '    <button class="btn-light ' + secondClass + '" data-order-id="' + escapeHtml(order.id) + '">' + secondLabel + '</button>' +
       '  </div>' +
       '</div>';
 
-    // tombol View Details (di dalam page order)
-    article.querySelectorAll('.view-details').forEach(btn => {
-      btn.addEventListener('click', function () {
-        renderOrderDetails(this.dataset.orderId);
+    // tombol View Details (Active/Scheduled)
+    if (!isHistory) {
+      article.querySelectorAll('.view-details').forEach(btn => {
+        btn.addEventListener('click', function () {
+          renderOrderDetails(this.dataset.orderId);
+        });
       });
-    });
+    }
+
+    // tombol REORDER (History)
+    if (isHistory) {
+      article.querySelectorAll('.reorder-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const id = this.dataset.orderId;
+          if (!id) return;
+          reorderFromHistory(id);
+        });
+      });
+    }
 
     // tombol Track Order -> pindah ke halaman detail (ditel.html?id=...)
     article.querySelectorAll('.btn-outline').forEach(btn => {
@@ -91,8 +143,8 @@
     });
 
     return article;
-
   }
+
 
   // ===== ACTIVE tab =====
   function renderActive() {
@@ -120,10 +172,10 @@
       return;
     }
 
-    activeOrders.forEach(o => {
-      panel.appendChild(renderOrderCardSummary(o));
-    });
-  }
+  activeOrders.forEach(o => {
+    panel.appendChild(renderOrderCardSummary(o, { context: 'active' }));
+  });
+}
 
   // ===== SCHEDULED tab =====
   function renderSchedule() {
@@ -144,12 +196,15 @@
       panel.innerHTML = '<div style="padding:16px;color:#666">No scheduled orders.</div>';
       return;
     }
+  scheduled.forEach(o => {
+    panel.appendChild(renderOrderCardSummary(o, { context: 'scheduled' }));
+  });
+}
 
-    scheduled.forEach(o => panel.appendChild(renderOrderCardSummary(o)));
-  }
+
+
 
   // ===== HISTORY tab =====
-// ===== HISTORY tab =====
 // ===== HISTORY tab =====
 function renderHistory() {
   const panel = document.getElementById('tab-history');
@@ -158,22 +213,58 @@ function renderHistory() {
 
   const orders = loadOrders() || [];
 
-  // History = semua order yang pernah ada (riwayat),
-  // supaya tidak ada order yang "hilang".
-  if (!orders.length) {
+  // hanya order yang sudah selesai / batal
+  const historyOrders = orders.filter(o => {
+    const st = String(o.status || '').toLowerCase();
+    return ['delivered', 'completed', 'cancelled'].includes(st);
+  });
+
+  if (!historyOrders.length) {
     panel.innerHTML = '<div style="padding:16px;color:#666">History kosong.</div>';
     return;
   }
 
-  orders.forEach(o => {
-    panel.appendChild(renderOrderCardSummary(o));
+  historyOrders.forEach(o => {
+    panel.appendChild(renderOrderCardSummary(o, { context: 'history' }));
   });
 }
 
+function reorderFromHistory(orderId) {
+  const orders = loadOrders() || [];
+  const order = orders.find(o => String(o.id) === String(orderId));
+  if (!order) {
+    alert('Order tidak ditemukan.');
+    return;
+  }
 
+  let cart = loadBag() || [];
 
+  (order.items || []).forEach((it, idx) => {
+    if (!it) return;
 
+    const qty = Number(it.qty || 1);
+    const unit = Number(it.unitPrice || it.price || 0);
+    const subtotal = Number(it.subtotal || (unit * qty));
 
+    const item = {
+      id: it.id || (`reorder-${order.id}-${idx}`),  // kalau ga ada id, bikin dummy
+      title: it.title || '',
+      unitPrice: unit,
+      qty: qty,
+      subtotal: subtotal,
+      image: it.image || (it.images && it.images[0]) || 'assets/placeholder.png',
+      addons: it.addons || [],
+      source: 'reorder'  // optional, cuma penanda
+    };
+
+    cart.push(item);
+  });
+
+  saveBag(cart);
+
+  alert('Barang dari order ini sudah dimasukkan ke Bag ✔');
+  window.location.href = 'bagfr.html';
+}
 
   
 
