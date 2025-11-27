@@ -27,26 +27,25 @@
   }
 
   // ----- render cart -----
-function renderCart(){
-  const items = loadCart();
-  const container = document.getElementById('bag-items') ||
-                    document.querySelector('.cart-list') ||
-                    document.querySelector('.bag-items');
-  if (!container) return;
+  function renderCart(){
+    const items = loadCart();
+    const container = document.getElementById('bag-items') ||
+                      document.querySelector('.cart-list') ||
+                      document.querySelector('.bag-items');
+    if (!container) return;
 
-  // 🔥 PENTING: selalu kosongkan dulu sebelum render ulang
-  container.innerHTML = '';
+    // kosongkan dulu
+    container.innerHTML = '';
 
-  if (!items.length){
-    container.innerHTML = `
-      <div class="empty-bag">
-        <img src="acs/bag1.png" alt="Keranjang kosong">
-      </div>
-    `;
-    updateSummaryTotal();
-    return;
-  }
-
+    if (!items.length){
+      container.innerHTML = `
+        <div class="empty-bag">
+          <img src="acs/bag1.png" alt="Keranjang kosong">
+        </div>
+      `;
+      updateSummaryTotal();
+      return;
+    }
 
     let total = 0;
     items.forEach((it, idx) => {
@@ -182,7 +181,7 @@ function renderCart(){
         qty: qty,
         subtotal: Number(productObj.subtotal || (unit * qty)),
         image: productObj.image || (productObj.images && productObj.images[0]) || 'assets/placeholder.png',
-        addons: productObj.addons || [],
+        addons: productObj.addons || [], // array
         source: productObj.source || ''
       };
       cart.push(item);
@@ -327,7 +326,7 @@ function renderCart(){
 })();  // end first IIFE
 
 
-// ===== Checkout -> create order & redirect to order.html =====
+// ===== Checkout -> create order & redirect to order.html + WhatsApp =====
 (function () {
   'use strict';
 
@@ -388,9 +387,8 @@ function renderCart(){
       items: items
     };
   }
-  
 
-  // klik tombol Checkout
+  // CHECKOUT: simpan order + buka WA + redirect ke Orders
   document.addEventListener('click', function(e){
     const btn = e.target.closest && e.target.closest('.checkout');
     if (!btn) return;
@@ -410,14 +408,37 @@ function renderCart(){
     localStorage.removeItem('cart');
     if (typeof window.renderCart === 'function') window.renderCart();
 
+    // WhatsApp
+    const waNumber = '628118281416';
+    const waText = `Halo mimin Mazi, tolong cek ongkir untuk pesanan ku dengan ID ${order.id}.`;
+    const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
+    window.open(waUrl, '_blank');
+
     // redirect ke orders page
     window.location.href = './order.html?order=' + encodeURIComponent(order.id);
   });
 
-  // gift-toggle: navigate to gif.html
+  // GIFT-TOGGLE: hanya boleh kalau cart tidak kosong
   document.addEventListener('click', function(e){
     const tg = e.target.closest && e.target.closest('.gift-toggle');
     if (!tg) return;
+
+    const cart = loadCartSafe();
+    if (!cart.length) {
+      try {
+        tg.animate(
+          [
+            { transform:'scale(1)' },
+            { transform:'scale(1.04)' },
+            { transform:'scale(1)' }
+          ],
+          { duration: 180 }
+        );
+      } catch(err){}
+      alert('Tambahkan dulu minimal 1 item ke Bag sebelum menjadikan pesanan sebagai hadiah 💝');
+      return;
+    }
+
     const pressed = tg.getAttribute('aria-pressed') === 'true';
     tg.setAttribute('aria-pressed', pressed ? 'false' : 'true');
     try {
