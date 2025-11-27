@@ -70,7 +70,24 @@ document.addEventListener("DOMContentLoaded", () => {
     arr.push(newAddress);
     writeStore(arr);
 
-    // redirect back (drafamt.html)
-    window.location.href = "drafamt.html";
+    // bentuk teks siap tempel ke Recipient (nama + telp + alamat lengkap)
+    const recipientText = `${name}\n${phone}\n${addressText}`;
+
+    // cek apakah datang dari flow checkout (alamat.html?from=checkout)
+    const params = new URLSearchParams(window.location.search);
+    const fromCheckout = params.get('from') === 'checkout';
+
+    if (fromCheckout) {
+      try {
+        localStorage.setItem('checkoutRecipientDraft_v1', recipientText);
+      } catch (e) {}
+
+      // langsung balik ke halaman checkout
+      window.location.href = 'cekout.html';
+    } else {
+      // flow biasa: balik ke daftar alamat
+      window.location.href = 'drafamt.html';
+    }
+
   });
 });

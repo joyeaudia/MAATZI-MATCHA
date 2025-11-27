@@ -297,8 +297,13 @@ function reorderFromHistory(orderId) {
   
 
 
+
+
+
+
+
   // ===== DETAIL VIEW =====
- function renderOrderDetails(orderId) {
+function renderOrderDetails(orderId) {
   const orders = loadOrders();
   const order = (orders || []).find(o => String(o.id) === String(orderId));
 
@@ -310,7 +315,6 @@ function reorderFromHistory(orderId) {
     const el = document.getElementById(id);
     if (!el) continue;
 
-    // kalau style.display != 'none' dan tidak mengandung .hidden → berarti lagi kelihatan
     const hiddenByDisplay = el.style.display === 'none';
     const hiddenByClass = el.classList.contains('hidden');
 
@@ -320,7 +324,7 @@ function reorderFromHistory(orderId) {
     }
   }
 
-  // fallback kalau entah gimana ga ketemu (jaga-jaga aja)
+  // fallback
   if (!panel) {
     panel =
       document.getElementById('tab-history') ||
@@ -339,6 +343,7 @@ function reorderFromHistory(orderId) {
   h.textContent = 'Order Details';
   panel.appendChild(h);
 
+  // ===== list item =====
   const list = document.createElement('div');
   list.style.marginTop = '12px';
 
@@ -370,7 +375,6 @@ function reorderFromHistory(orderId) {
   });
 
   panel.appendChild(list);
-
 
   // ===== GIFT DETAILS (kalau ini gift order) =====
   if (order.isGift && order.gift) {
@@ -411,45 +415,68 @@ function reorderFromHistory(orderId) {
       '<div style="font-weight:600;margin-bottom:4px">🎁 Gift details</div>' +
       messageHtml +
       fromHtml +
-      '<div><strong>Reveal option:</strong> ' + escapeHtml(revealLabel) + '</div>' +
+      '<div><strong>Reveal:</strong> ' + escapeHtml(revealLabel) + '</div>' +
       themeHtml +
       scheduleHtml;
 
     panel.appendChild(giftBox);
   }
 
+  // ===== RECIPIENT / ADDRESS BLOCK =====
+  const rawRecipient =
+    order.meta && typeof order.meta.recipient === 'string'
+      ? order.meta.recipient.trim()
+      : '';
 
-
-  // ===== address block =====
-  const savedAddrs = safeParse('savedAddresses_v1');
-  let chosenAddr = null;
-  if (Array.isArray(savedAddrs) && savedAddrs.length) {
-    chosenAddr = savedAddrs.find(a => a && a.isDefault) || savedAddrs[0];
-  }
-
-  if (chosenAddr) {
+  if (rawRecipient) {
+    // Kalau user isi "Recipient Information" di checkout,
+    // pakai ini sebagai tujuan pengiriman order
     const addrBlock = document.createElement('div');
     addrBlock.className = 'order-address-block';
 
-    const label = escapeHtml(chosenAddr.label || '');
-    const name = escapeHtml(chosenAddr.name || '');
-    const phone = escapeHtml(chosenAddr.phone || '');
-    const addrHtml = escapeHtml(chosenAddr.address || '').replace(/\n/g, '<br>');
-
-    const combined = `${label ? label : ''}${label && name ? ' - ' : ''}${name ? name : ''}`;
+    const addrHtml = escapeHtml(rawRecipient).replace(/\n/g, '<br>');
 
     addrBlock.innerHTML = `
       <div class="order-address-head">
-        <span class="title">Address</span>
-        <a href="drafamt.html" class="edit-link small">Edit</a>
+        <span class="title">Recipient</span>
       </div>
       <div class="order-address-body">
-        <div class="line-combined">${combined}</div>
-        ${phone ? `<div class="line-phone">${phone}</div>` : ''}
         <div class="line-address">${addrHtml}</div>
       </div>
     `;
     panel.appendChild(addrBlock);
+  } else {
+    // Kalau recipient kosong → fallback ke Saved Address profil (alamat.html)
+    const savedAddrs = safeParse('savedAddresses_v1');
+    let chosenAddr = null;
+    if (Array.isArray(savedAddrs) && savedAddrs.length) {
+      chosenAddr = savedAddrs.find(a => a && a.isDefault) || savedAddrs[0];
+    }
+
+    if (chosenAddr) {
+      const addrBlock = document.createElement('div');
+      addrBlock.className = 'order-address-block';
+
+      const label = escapeHtml(chosenAddr.label || '');
+      const name = escapeHtml(chosenAddr.name || '');
+      const phone = escapeHtml(chosenAddr.phone || '');
+      const addrHtml = escapeHtml(chosenAddr.address || '').replace(/\n/g, '<br>');
+
+      const combined = `${label ? label : ''}${label && name ? ' - ' : ''}${name ? name : ''}`;
+
+      addrBlock.innerHTML = `
+        <div class="order-address-head">
+          <span class="title">Address</span>
+          <a href="drafamt.html" class="edit-link small">Edit</a>
+        </div>
+        <div class="order-address-body">
+          <div class="line-combined">${combined}</div>
+          ${phone ? `<div class="line-phone">${phone}</div>` : ''}
+          <div class="line-address">${addrHtml}</div>
+        </div>
+      `;
+      panel.appendChild(addrBlock);
+    }
   }
 
   // ===== NOTE PEMBAYARAN (DINAMIS) =====
@@ -505,6 +532,7 @@ function reorderFromHistory(orderId) {
     });
   }
 }
+
 
 
 

@@ -108,6 +108,13 @@
     const paymentStatus = (order.paymentStatus || 'pending').toLowerCase();
 
     // address: pakai default savedAddresses_v1
+    // address: PRIORITAS ke recipient khusus order (meta.recipient),
+    // kalau kosong baru fallback ke default savedAddresses_v1
+    const rawRecipient =
+      order.meta && typeof order.meta.recipient === 'string'
+        ? order.meta.recipient.trim()
+        : '';
+
     const savedAddrs = safeParse('savedAddresses_v1');
     let chosenAddr = null;
     if (Array.isArray(savedAddrs) && savedAddrs.length){
@@ -115,7 +122,18 @@
     }
 
     let addrBlock = '';
-    if (chosenAddr){
+
+    if (rawRecipient) {
+      const addrHtml = escapeHtml(rawRecipient).replace(/\n/g, '<br>');
+      addrBlock = `
+        <div class="admin-address">
+          <div class="admin-address-title">Recipient</div>
+          <div class="admin-address-main">
+            <div>${addrHtml}</div>
+          </div>
+        </div>
+      `;
+    } else if (chosenAddr){
       const label = escapeHtml(chosenAddr.label || '');
       const name  = escapeHtml(chosenAddr.name || '');
       const phone = escapeHtml(chosenAddr.phone || '');
@@ -133,6 +151,7 @@
         </div>
       `;
     }
+
 
     const first = order.items && order.items[0];
     const moreCount = Math.max(0, (order.items || []).length - 1);

@@ -82,11 +82,20 @@ Back
       </section>
 
       <!-- Recipient -->
-      <section class="card">
-        <label class="label" for="recipient">Recipient Information</label>
-        <textarea id="recipient" class="textarea" placeholder="Please write the recipient's name, number, and full address"></textarea>
-        <div class="muted small-link">Saved Address</div>
-      </section>
+<section class="card">
+  <label class="label" for="recipient">Recipient Information</label>
+  <textarea id="recipient" class="textarea"
+    placeholder="Please write the recipient's name, number, and full address"></textarea>
+
+  <!-- wrapper khusus buat tombol Saved Address -->
+  <div class="recipient-actions">
+    <button type="button" id="btnUseSavedAddress" class="saved-link">
+      Saved Address
+    </button>
+  </div>
+</section>
+
+
 
       <!-- Delivery Method -->
       <section class="card">

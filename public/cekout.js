@@ -110,6 +110,24 @@ document.addEventListener('DOMContentLoaded', function () {
   const totalEl = document.getElementById('totalRp');
   const deliveryBtns = Array.from(document.querySelectorAll('.delivery-item'));
   const deliveryRow = document.getElementById('deliveryRow');
+  // tombol "Saved Address" -> buka halaman daftar alamat dengan context checkout
+const useSavedBtn = document.getElementById('btnUseSavedAddress');
+if (useSavedBtn) {
+  useSavedBtn.addEventListener('click', function () {
+    window.location.href = 'drafamt.html?from=checkout';
+  });
+}
+
+  // kalau ada draft recipient dari halaman alamat, isi textarea otomatis
+const recipientInput = document.getElementById('recipient');
+try {
+  const draft = localStorage.getItem('checkoutRecipientDraft_v1');
+  if (recipientInput && draft) {
+    recipientInput.value = draft;
+    localStorage.removeItem('checkoutRecipientDraft_v1');
+  }
+} catch (e) {}
+
 
   if (!productList || !subtotalEl || !shippingEl || !totalEl) {
     console.warn('cekout: required elements not found');
@@ -350,6 +368,9 @@ document.addEventListener('DOMContentLoaded', function () {
           addons: it.addons || [],
           image: it.image || (it.images && it.images[0]) || ''
         })),
+
+
+
         meta: {
           notes: notes,
           recipient: recipient,
