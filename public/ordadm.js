@@ -138,6 +138,42 @@
     const moreCount = Math.max(0, (order.items || []).length - 1);
     const firstTitle = first ? escapeHtml(first.title) : 'No title';
 
+    const isGift = !!order.isGift && !!order.gift;
+    let giftInfoHtml = '';
+
+    if (isGift) {
+      const revealLabel =
+        String(order.gift.revealMode || 'reveal') === 'surprise'
+          ? 'Keep it a surprise'
+          : 'Reveal it now';
+
+      let scheduleText = '';
+      if (order.scheduledAt) {
+        try {
+          scheduleText = new Date(order.scheduledAt).toLocaleString('id-ID');
+        } catch (e) {}
+      }
+
+      const recipientText =
+        order.meta && order.meta.recipient
+          ? escapeHtml(order.meta.recipient)
+          : '';
+
+      giftInfoHtml = `
+        <div class="admin-gift-block">
+          <div class="admin-gift-title">🎁 Gift order</div>
+          ${order.gift.message ? `<div class="admin-gift-line"><strong>Message:</strong> ${escapeHtml(order.gift.message)}</div>` : ''}
+          ${order.gift.fromName ? `<div class="admin-gift-line"><strong>From:</strong> ${escapeHtml(order.gift.fromName)}</div>` : ''}
+          <div class="admin-gift-line"><strong>Reveal:</strong> ${escapeHtml(revealLabel)}</div>
+          ${scheduleText ? `<div class="admin-gift-line"><strong>Schedule:</strong> ${escapeHtml(scheduleText)}</div>` : ''}
+          ${recipientText ? `<div class="admin-gift-line"><strong>Recipient:</strong> ${recipientText}</div>` : ''}
+        </div>
+      `;
+    }
+
+
+
+
     const badgePaymentClass =
       paymentStatus === 'paid' ? 'badge-payment paid' :
       paymentStatus === 'rejected' ? 'badge-payment rejected' :
@@ -155,6 +191,8 @@
         <span class="badge">Total: ${fmt(order.total)}</span>
       </div>
 
+      ${giftInfoHtml}
+
       <div class="admin-items">
         <div>${firstTitle}${moreCount > 0 ? ' +' + moreCount + ' more' : ''}</div>
       </div>
@@ -166,6 +204,7 @@
         <button class="btn btn-reject" data-id="${escapeHtml(order.id)}">Tolak order</button>
       </div>
     `;
+
 
     const approveBtn = card.querySelector('.btn-approve');
     const rejectBtn  = card.querySelector('.btn-reject');

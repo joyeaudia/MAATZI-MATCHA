@@ -371,6 +371,55 @@ function reorderFromHistory(orderId) {
 
   panel.appendChild(list);
 
+
+  // ===== GIFT DETAILS (kalau ini gift order) =====
+  if (order.isGift && order.gift) {
+    const giftBox = document.createElement('div');
+    giftBox.className = 'order-gift-block';
+    giftBox.style.marginTop = '12px';
+    giftBox.style.padding = '12px';
+    giftBox.style.borderRadius = '10px';
+    giftBox.style.background = '#fff6fb';
+
+    const revealLabel =
+      String(order.gift.revealMode || 'reveal') === 'surprise'
+        ? 'Keep it a surprise'
+        : 'Reveal it now';
+
+    let scheduleHtml = '';
+    if (order.scheduledAt) {
+      try {
+        const dt = new Date(order.scheduledAt);
+        scheduleHtml =
+          '<div><strong>Schedule:</strong> ' +
+          escapeHtml(dt.toLocaleString('id-ID')) +
+          '</div>';
+      } catch (e) {}
+    }
+
+    const messageHtml = order.gift.message
+      ? '<div><strong>Message:</strong> ' + escapeHtml(order.gift.message) + '</div>'
+      : '';
+    const fromHtml = order.gift.fromName
+      ? '<div><strong>From:</strong> ' + escapeHtml(order.gift.fromName) + '</div>'
+      : '';
+    const themeHtml = order.gift.theme
+      ? '<div><strong>Card theme:</strong> ' + escapeHtml(order.gift.theme) + '</div>'
+      : '';
+
+    giftBox.innerHTML =
+      '<div style="font-weight:600;margin-bottom:4px">🎁 Gift details</div>' +
+      messageHtml +
+      fromHtml +
+      '<div><strong>Reveal option:</strong> ' + escapeHtml(revealLabel) + '</div>' +
+      themeHtml +
+      scheduleHtml;
+
+    panel.appendChild(giftBox);
+  }
+
+
+
   // ===== address block =====
   const savedAddrs = safeParse('savedAddresses_v1');
   let chosenAddr = null;

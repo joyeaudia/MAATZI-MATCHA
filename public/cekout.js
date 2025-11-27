@@ -299,7 +299,11 @@ document.addEventListener('DOMContentLoaded', function () {
       // compute totals again (source of truth: cart array)
       let totalPrice = 0;
       cart.forEach(it => {
-        totalPrice += Number(it.subtotal || (Number(it.unitPrice || it.price || 0) * Number(it.qty || 0)) || 0);
+        totalPrice += Number(
+          it.subtotal ||
+          (Number(it.unitPrice || it.price || 0) * Number(it.qty || 0)) ||
+          0
+        );
       });
 
       const selectedDelivery = document.querySelector('.delivery-item.active')?.dataset.method || 'regular';
@@ -317,6 +321,15 @@ document.addEventListener('DOMContentLoaded', function () {
       const shippingFee = baseOngkir * kelipatan;
       const grandTotal = Number(totalPrice) + Number(shippingFee);
 
+      // ---- cek apakah ini GIFT order (data dari gif.html) ----
+      let giftConfig = null;
+      try {
+        giftConfig = JSON.parse(localStorage.getItem('giftConfig_v1') || 'null');
+      } catch (e) {
+        giftConfig = null;
+      }
+      const isGift = !!(giftConfig && giftConfig.type === 'gift');
+
       // prepare order object
       const order = {
         id: genOrderId(),
@@ -330,7 +343,10 @@ document.addEventListener('DOMContentLoaded', function () {
           title: it.title,
           qty: Number(it.qty || 1),
           unitPrice: Number(it.unitPrice || it.price || 0),
-          subtotal: Number(it.subtotal || (Number(it.unitPrice || it.price || 0) * Number(it.qty || 1))),
+          subtotal: Number(
+            it.subtotal ||
+            (Number(it.unitPrice || it.price || 0) * Number(it.qty || 1))
+          ),
           addons: it.addons || [],
           image: it.image || (it.images && it.images[0]) || ''
         })),
@@ -338,16 +354,52 @@ document.addEventListener('DOMContentLoaded', function () {
           notes: notes,
           recipient: recipient,
           deliveryMethod: selectedDelivery
-        }
+        },
+        paymentStatus: 'pending' // biar konsisten dengan order dari bagfr.js
       };
+
+      // kalau ini dari flow GIFT, tambahkan flag & detail gift
+      if (isGift) {
+        order.isGift = true;
+        order.gift = {
+          message: giftConfig.message || '',
+          fromName: giftConfig.fromName || '',
+          revealMode: giftConfig.revealMode || 'reveal',
+          theme: giftConfig.theme || null
+        };
+      }
 
       // save orders (most recent first)
       const orders = loadOrders();
       orders.unshift(order);
       saveOrders(orders);
 
-      // clear cart
+      // clear cart & gift config
       try { localStorage.removeItem('cart'); } catch (e) { /* ignore */ }
+      try { localStorage.removeItem('giftConfig_v1'); } catch (e) { /* ignore */ }
+
+      // WhatsApp ke admin (mirip flow dari bagfr.js)
+      try {
+        const waNumber = '628118281416';
+        let waText = '';
+
+        if (isGift) {
+          const tgl = scheduledAt
+            ? new Date(scheduledAt).toLocaleString('id-ID')
+            : '(tanpa jadwal)';
+          waText =
+            `Halo mimin Mazi, ini pesanan GIFT terjadwal dengan ID ${order.id}. ` +
+            `Mohon dibantu proses untuk jadwal ${tgl}.`;
+        } else {
+          waText =
+            `Halo mimin Mazi, tolong proses pesanan terjadwal saya dengan ID ${order.id}.`;
+        }
+
+        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
+        window.open(waUrl, '_blank');
+      } catch (e) {
+        console.warn('Failed to open WhatsApp', e);
+      }
 
       // redirect to order.html with order id
       window.location.href = './order.html?order=' + encodeURIComponent(order.id);

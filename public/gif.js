@@ -52,4 +52,39 @@
 
   // expose selection for debugging
   window.getSelectedGiftTheme = () => document.querySelector('.gift-form')?.dataset.selectedTheme || null;
+    // ==== GIFT CONFIG -> simpan ke localStorage sebelum ke checkout ====
+  const msgInput   = document.getElementById('message');
+  const fromInput  = document.getElementById('from');
+  const giftNext   = document.getElementById('gift-next');
+  const giftFormEl = document.querySelector('.gift-form');
+
+  function getCurrentRevealMode() {
+    const activeChoice = document.querySelector('.choice-btn.active');
+    return activeChoice ? (activeChoice.dataset.choice || 'reveal') : 'reveal';
+  }
+
+  function saveGiftConfig() {
+    const cfg = {
+      type: 'gift',
+      message: msgInput?.value?.trim() || '',
+      fromName: fromInput?.value?.trim() || '',
+      revealMode: getCurrentRevealMode(),               // 'reveal' / 'surprise'
+      theme: giftFormEl?.dataset.selectedTheme || null  // ex: 'theme3'
+    };
+
+    try {
+      localStorage.setItem('giftConfig_v1', JSON.stringify(cfg));
+    } catch (e) {
+      console.warn('Failed to save giftConfig_v1', e);
+    }
+  }
+
+  if (giftNext) {
+    giftNext.addEventListener('click', function () {
+      // sebelum pindah ke cekout.html, simpan dulu semua pilihan gift
+      saveGiftConfig();
+      // ga perlu preventDefault -> biarkan link jalan normal
+    });
+  }
+
 })();
