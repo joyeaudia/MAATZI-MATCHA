@@ -27,20 +27,25 @@
   }
 
   // ----- render cart -----
-  function renderCart(){
-    const items = loadCart();
-    const container = document.getElementById('bag-items') ||
-                      document.querySelector('.cart-list') ||
-                      document.querySelector('.bag-items');
-if (!items.length){
-  container.innerHTML = `
-    <div class="empty-bag">
-      <img src="acs/bag1.png" alt="Keranjang kosong">
-    </div>
-  `;
-  updateSummaryTotal();
-  return;
-}
+function renderCart(){
+  const items = loadCart();
+  const container = document.getElementById('bag-items') ||
+                    document.querySelector('.cart-list') ||
+                    document.querySelector('.bag-items');
+  if (!container) return;
+
+  // 🔥 PENTING: selalu kosongkan dulu sebelum render ulang
+  container.innerHTML = '';
+
+  if (!items.length){
+    container.innerHTML = `
+      <div class="empty-bag">
+        <img src="acs/bag1.png" alt="Keranjang kosong">
+      </div>
+    `;
+    updateSummaryTotal();
+    return;
+  }
 
 
     let total = 0;
