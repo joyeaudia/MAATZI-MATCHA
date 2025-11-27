@@ -228,6 +228,25 @@ body{
   border-radius:8px;
 }
 
+.theme-swatch {
+  width: 55px;
+  height: 50px;
+  padding: 0;
+  background: none;  /* Hilangkan gradient belakang */
+  border-radius: 12px;
+  overflow: hidden; /* Biar gambar ikut radius */
+  border: 2px solid rgba(0,0,0,0.04);
+}
+
+.theme-swatch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* isi penuh */
+  display: block;
+}
+
+
+
 /* preview box */
 .theme-preview {
   background: #fff;
