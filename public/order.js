@@ -74,76 +74,99 @@ function saveBag(list) {
     return 'Products';
   }
 
+
+
+
+
+
   // ===== card summary renderer (dipakai di semua tab) =====
   // ===== card summary renderer (dipakai di semua tab) =====
-  function renderOrderCardSummary(order, opts) {
-    const ctx = (opts && opts.context) || '';   // 'active' / 'scheduled' / 'history'
-    const isHistory = ctx === 'history';
+function renderOrderCardSummary(order, opts) {
+  const ctx = (opts && opts.context) || '';   // 'active' / 'scheduled' / 'history'
+  const isHistory = ctx === 'history';
 
-    const first = order.items && order.items[0];
-    const moreCount = Math.max(0, (order.items || []).length - 1);
-    const brand = first ? guessBrand(first) : 'Products';
-    const imgHtml = (first && first.image)
-      ? '<img src="' + escapeHtml(first.image) + '" alt="' + escapeHtml(first.title) + '" style="width:68px;height:68px;object-fit:cover;border-radius:8px">'
-      : '<div class="thumb"></div>';
-    const status = order.status || 'active';
-    const created = new Date(order.createdAt || Date.now()).toLocaleString();
+  const first = order.items && order.items[0];
+  const moreCount = Math.max(0, (order.items || []).length - 1);
+  const brand = first ? guessBrand(first) : 'Products';
+  const imgHtml = (first && first.image)
+    ? '<img src="' + escapeHtml(first.image) + '" alt="' + escapeHtml(first.title) + '" style="width:68px;height:68px;object-fit:cover;border-radius:8px">'
+    : '<div class="thumb"></div>';
+  const status = order.status || 'active';
+  const statusLower = String(status).toLowerCase();
+  const created = new Date(order.createdAt || Date.now()).toLocaleString();
 
-    // label & class tombol kedua
+  // 👇 ACTION BUTTONS: beda-beda tergantung context + status
+  let actionsHtml = '';
+
+  if (isHistory && statusLower === 'cancelled') {
+    // 🔴 HISTORY + CANCELLED:
+    // Reorder + View Details (TANPA Track Order)
+    actionsHtml =
+      '  <div class="order-actions">' +
+      '    <button class="btn-outline reorder-btn" data-order-id="' + escapeHtml(order.id) + '">Reorder</button>' +
+      '    <button class="btn-light view-details" data-order-id="' + escapeHtml(order.id) + '">View Details</button>' +
+      '  </div>';
+  } else {
+    // ACTIVE / SCHEDULED / HISTORY (delivered/completed):
+    // Track Order + (View Details / Reorder)
     const secondLabel = isHistory ? 'Reorder' : 'View Details';
     const secondClass = isHistory ? 'reorder-btn' : 'view-details';
 
-    const article = document.createElement('article');
-    article.className = 'order-card';
-    article.innerHTML =
-      '<div class="thumb">' + imgHtml + '</div>' +
-      '<div class="order-info">' +
-      '  <div class="order-top">' +
-      '    <h3 class="product-title">' + escapeHtml(first ? first.title : 'No title') + '</h3>' +
-      '    <span class="more">' + (moreCount > 0 ? '+' + moreCount + ' More' : '') + '</span>' +
-      '  </div>' +
-      '  <p class="brand">' + escapeHtml(brand) + '</p>' +
-      '  <div class="status-row">' +
-      '    <span class="status">Status : <strong>' + escapeHtml(status) + '</strong></span>' +
-      '    <span class="eta">Created : <em>' + escapeHtml(created) + '</em></span>' +
-      '  </div>' +
+    actionsHtml =
       '  <div class="order-actions">' +
-      '    <button class="btn-outline" data-order-id="' + escapeHtml(order.id) + '">Track Order</button>' +
+      '    <button class="btn-outline track-btn" data-order-id="' + escapeHtml(order.id) + '">Track Order</button>' +
       '    <button class="btn-light ' + secondClass + '" data-order-id="' + escapeHtml(order.id) + '">' + secondLabel + '</button>' +
-      '  </div>' +
-      '</div>';
-
-    // tombol View Details (Active/Scheduled)
-    if (!isHistory) {
-      article.querySelectorAll('.view-details').forEach(btn => {
-        btn.addEventListener('click', function () {
-          renderOrderDetails(this.dataset.orderId);
-        });
-      });
-    }
-
-    // tombol REORDER (History)
-    if (isHistory) {
-      article.querySelectorAll('.reorder-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-          const id = this.dataset.orderId;
-          if (!id) return;
-          reorderFromHistory(id);
-        });
-      });
-    }
-
-    // tombol Track Order -> pindah ke halaman detail (ditel.html?id=...)
-    article.querySelectorAll('.btn-outline').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const id = this.dataset.orderId;
-        if (!id) return;
-        window.location.href = 'ditel.html?id=' + encodeURIComponent(id);
-      });
-    });
-
-    return article;
+      '  </div>';
   }
+
+  const article = document.createElement('article');
+  article.className = 'order-card';
+  article.innerHTML =
+    '<div class="thumb">' + imgHtml + '</div>' +
+    '<div class="order-info">' +
+    '  <div class="order-top">' +
+    '    <h3 class="product-title">' + escapeHtml(first ? first.title : 'No title') + '</h3>' +
+    '    <span class="more">' + (moreCount > 0 ? '+' + moreCount + ' More' : '') + '</span>' +
+    '  </div>' +
+    '  <p class="brand">' + escapeHtml(brand) + '</p>' +
+    '  <div class="status-row">' +
+    '    <span class="status">Status : <strong>' + escapeHtml(status) + '</strong></span>' +
+    '    <span class="eta">Created : <em>' + escapeHtml(created) + '</em></span>' +
+    '  </div>' +
+         actionsHtml +
+    '</div>';
+
+  // 🔹 VIEW DETAILS (dipakai di Active, Scheduled, dan History-cancelled)
+  article.querySelectorAll('.view-details').forEach(btn => {
+    btn.addEventListener('click', function () {
+      renderOrderDetails(this.dataset.orderId);
+    });
+  });
+
+  // 🔹 REORDER (History)
+  article.querySelectorAll('.reorder-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const id = this.dataset.orderId;
+      if (!id) return;
+      reorderFromHistory(id);
+    });
+  });
+
+  // 🔹 TRACK ORDER (semua yang masih punya track-btn)
+  article.querySelectorAll('.track-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const id = this.dataset.orderId;
+      if (!id) return;
+      window.location.href = 'ditel.html?id=' + encodeURIComponent(id);
+    });
+  });
+
+  return article;
+}
+
+
+
+
 
 
   // ===== ACTIVE tab =====
@@ -178,31 +201,36 @@ function saveBag(list) {
 }
 
   // ===== SCHEDULED tab =====
-  function renderSchedule() {
-    const panel =
-      document.getElementById('tab-schedule') ||
-      document.getElementById('tab-scheduled');
-    if (!panel) return;
-    panel.innerHTML = '';
+function renderSchedule() {
+  const panel =
+    document.getElementById('tab-schedule') ||
+    document.getElementById('tab-scheduled');
+  if (!panel) return;
+  panel.innerHTML = '';
 
-    const orders = loadOrders();
-    const scheduled = (orders || []).filter(
-      o =>
-        (o.status && String(o.status).toLowerCase() === 'scheduled') ||
-        o.scheduledAt
-    );
+  const orders = loadOrders();
 
-    if (!scheduled.length) {
-      panel.innerHTML = '<div style="padding:16px;color:#666">No scheduled orders.</div>';
-      return;
+  const scheduled = (orders || []).filter(o => {
+    const st = String(o.status || '').toLowerCase();
+
+    // 🚫 JANGAN tampilkan kalau sudah final
+    if (['delivered', 'completed', 'cancelled'].includes(st)) {
+      return false;
     }
+
+    // ✅ Scheduled = status scheduled ATAU punya jadwal
+    return st === 'scheduled' || o.scheduledAt;
+  });
+
+  if (!scheduled.length) {
+    panel.innerHTML = '<div style="padding:16px;color:#666">No scheduled orders.</div>';
+    return;
+  }
+
   scheduled.forEach(o => {
     panel.appendChild(renderOrderCardSummary(o, { context: 'scheduled' }));
   });
 }
-
-
-
 
   // ===== HISTORY tab =====
 // ===== HISTORY tab =====
@@ -268,176 +296,172 @@ function reorderFromHistory(orderId) {
 
   
 
+
   // ===== DETAIL VIEW =====
-  function renderOrderDetails(orderId) {
-    const orders = loadOrders();
-    const order = (orders || []).find(o => String(o.id) === String(orderId));
-    const panelIds = ['tab-active', 'tab-schedule', 'tab-scheduled', 'tab-history'];
+ function renderOrderDetails(orderId) {
+  const orders = loadOrders();
+  const order = (orders || []).find(o => String(o.id) === String(orderId));
 
-    let panel = null;
-    for (const id of panelIds) {
-      const el = document.getElementById(id);
-      if (el) { panel = el; break; }
+  // PILIH PANEL YANG SEDANG AKTIF / KELIHATAN
+  const panelIds = ['tab-active', 'tab-schedule', 'tab-scheduled', 'tab-history'];
+  let panel = null;
+
+  for (const id of panelIds) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+
+    // kalau style.display != 'none' dan tidak mengandung .hidden → berarti lagi kelihatan
+    const hiddenByDisplay = el.style.display === 'none';
+    const hiddenByClass = el.classList.contains('hidden');
+
+    if (!hiddenByDisplay && !hiddenByClass) {
+      panel = el;
+      break;
     }
-    if (!panel) return;
+  }
 
-    panel.innerHTML = '';
+  // fallback kalau entah gimana ga ketemu (jaga-jaga aja)
+  if (!panel) {
+    panel =
+      document.getElementById('tab-history') ||
+      document.getElementById('tab-active');
+  }
+  if (!panel) return;
 
-    if (!order) {
-      panel.innerHTML = '<div style="padding:12px;color:#c33">Order tidak ditemukan.</div>';
-      return;
-    }
+  panel.innerHTML = '';
 
-    const h = document.createElement('h2');
-    h.textContent = 'Order Details';
-    panel.appendChild(h);
+  if (!order) {
+    panel.innerHTML = '<div style="padding:12px;color:#c33">Order tidak ditemukan.</div>';
+    return;
+  }
 
-    const list = document.createElement('div');
-    list.style.marginTop = '12px';
+  const h = document.createElement('h2');
+  h.textContent = 'Order Details';
+  panel.appendChild(h);
 
-    (order.items || []).forEach(it => {
-      const itEl = document.createElement('div');
-      itEl.style.padding = '10px 0';
-      itEl.innerHTML =
-        '<div style="display:flex;gap:12px;align-items:center">' +
-        '  <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:#f5f5f7;flex:0 0 56px">' +
-        (it.image
-          ? '<img src="' + escapeHtml(it.image) + '" style="width:100%;height:100%;object-fit:cover">'
-          : '') +
-        '  </div>' +
-        '  <div style="flex:1">' +
-        '    <div style="font-weight:700">' + escapeHtml(it.title) + '</div>' +
-        (it.addons && it.addons.length
-          ? '<div style="color:#666;margin-top:6px">' +
+  const list = document.createElement('div');
+  list.style.marginTop = '12px';
+
+  (order.items || []).forEach(it => {
+    const itEl = document.createElement('div');
+    itEl.style.padding = '10px 0';
+    itEl.innerHTML =
+      '<div style="display:flex;gap:12px;align-items:center">' +
+      '  <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:#f5f5f7;flex:0 0 56px">' +
+      (it.image
+        ? '<img src="' + escapeHtml(it.image) + '" style="width:100%;height:100%;object-fit:cover">'
+        : '') +
+      '  </div>' +
+      '  <div style="flex:1">' +
+      '    <div style="font-weight:700">' + escapeHtml(it.title) + '</div>' +
+      (it.addons && it.addons.length
+        ? '<div style="color:#666;margin-top:6px">' +
           it.addons.map(a => escapeHtml(a.label)).join(', ') +
           '</div>'
-          : '') +
-        '    <div style="color:#666;margin-top:6px">' +
-        (it.qty || 0) + ' × ' + fmt(it.unitPrice) +
-        ' = ' + fmt(it.subtotal) +
-        '</div>' +
-        '  </div>' +
-        '</div>';
+        : '') +
+      '    <div style="color:#666;margin-top:6px">' +
+      (it.qty || 0) + ' × ' + fmt(it.unitPrice) +
+      ' = ' + fmt(it.subtotal) +
+      '</div>' +
+      '  </div>' +
+      '</div>';
 
-      list.appendChild(itEl);
-    });
+    list.appendChild(itEl);
+  });
 
-    panel.appendChild(list);
+  panel.appendChild(list);
 
-    // ===== address block =====
-    const savedAddrs = safeParse('savedAddresses_v1');
-    let chosenAddr = null;
-    if (Array.isArray(savedAddrs) && savedAddrs.length) {
-      chosenAddr = savedAddrs.find(a => a && a.isDefault) || savedAddrs[0];
-    }
-
-    if (chosenAddr) {
-      const addrBlock = document.createElement('div');
-      addrBlock.className = 'order-address-block';
-
-      const label = escapeHtml(chosenAddr.label || '');
-      const name = escapeHtml(chosenAddr.name || '');
-      const phone = escapeHtml(chosenAddr.phone || '');
-      const addrHtml = escapeHtml(chosenAddr.address || '').replace(/\n/g, '<br>');
-
-      const combined = `${label ? label : ''}${label && name ? ' - ' : ''}${name ? name : ''}`;
-
-      addrBlock.innerHTML = `
-        <div class="order-address-head">
-          <span class="title">Address</span>
-          <a href="drafamt.html" class="edit-link small">Edit</a>
-        </div>
-        <div class="order-address-body">
-          <div class="line-combined">${combined}</div>
-          ${phone ? `<div class="line-phone">${phone}</div>` : ''}
-          <div class="line-address">${addrHtml}</div>
-        </div>
-      `;
-      panel.appendChild(addrBlock);
-    }
-
-    // ===== NOTE PEMBAYARAN (DINAMIS) =====
-    const rawPaymentStatus = (order.paymentStatus || 'pending').toLowerCase();
-    const rawStatus = (order.status || '').toLowerCase();
-    const isPaid = rawPaymentStatus === 'paid';
-    const isRejected = rawPaymentStatus === 'rejected' || rawStatus === 'cancelled';
-
-    const note = document.createElement('div');
-    let noteClass = 'pending';
-    let noteHtml = '';
-
-    if (isPaid) {
-      noteClass = 'paid';
-      noteHtml =
-        '<div>Status pesanan: <strong>Pesanan ' + escapeHtml(order.id || '') + ' sudah dibayar.</strong></div>' +
-        '<div class="status">Pembayaran sudah diterima admin ✅</div>' +
-        '<div class="track-hint">Anda dapat men-track order Anda dari halaman Orders / Active.</div>';
-    } else if (isRejected) {
-      note.innerHTML =
-        '<div style="font-weight:600">⛔ Orderan ini dicancel oleh admin</div>' +
-        '<div class="status">Status pembayaran: <strong style="color:#c00">Ditolak admin</strong></div>' +
-        '<div class="track-hint" style="color:#c00">Silakan hubungi admin jika ada kesalahan.</div>';
-    } else {
-      noteClass = 'pending';
-      noteHtml =
-        '<div>Segera melakukan pembayaran melalui WhatsApp kepada toko agar orderan Anda dapat di-ACC.</div>' +
-        '<div class="status">Status pembayaran: <strong>Pembayaran belum diterima admin</strong></div>';
-    }
-
-    if (!isRejected) {
-      note.className = 'order-payment-note ' + noteClass;
-      note.innerHTML = noteHtml;
-    }
-    panel.appendChild(note);
-
-    // total
-    const tot = document.createElement('div');
-    tot.style.marginTop = '12px';
-    tot.style.fontWeight = '700';
-    tot.textContent = 'Total: ' + fmt(order.total);
-    panel.appendChild(tot);
-
-    // tombol back + cancel
-    const back = document.createElement('div');
-    back.style.marginTop = '12px';
-    back.innerHTML =
-      '<button class="btn-light" id="back-to-summary">Back to summary</button>' +
-      ' ' +
-      '<button class="btn-outline btn-cancel-order" data-order-id="' +
-      escapeHtml(order.id) + '">Cancel Order</button>';
-    panel.appendChild(back);
-
-    const backBtn = back.querySelector('#back-to-summary');
-    if (backBtn) {
-      backBtn.addEventListener('click', function () {
-        renderAllLists();
-      });
-    }
-
-    const cancelBtn = back.querySelector('.btn-cancel-order');
-    if (cancelBtn) {
-      // kalau sudah cancelled ATAU sudah dibayar, jangan tampilkan tombol cancel lagi
-      if (isRejected || isPaid) {
-        cancelBtn.remove();
-      } else {
-        cancelBtn.addEventListener('click', function () {
-          const ok = confirm('Yakin ingin membatalkan order ini?');
-          if (!ok) return;
-
-          const all = loadOrders() || [];
-          const idx = all.findIndex(o => String(o.id) === String(orderId));
-          if (idx !== -1) {
-            all[idx].status = 'cancelled';
-            all[idx].paymentStatus = 'rejected';
-            saveOrders(all);
-          }
-          renderAllLists();
-          alert('Order telah dibatalkan. Status: cancelled');
-        });
-      }
-    }
-
+  // ===== address block =====
+  const savedAddrs = safeParse('savedAddresses_v1');
+  let chosenAddr = null;
+  if (Array.isArray(savedAddrs) && savedAddrs.length) {
+    chosenAddr = savedAddrs.find(a => a && a.isDefault) || savedAddrs[0];
   }
+
+  if (chosenAddr) {
+    const addrBlock = document.createElement('div');
+    addrBlock.className = 'order-address-block';
+
+    const label = escapeHtml(chosenAddr.label || '');
+    const name = escapeHtml(chosenAddr.name || '');
+    const phone = escapeHtml(chosenAddr.phone || '');
+    const addrHtml = escapeHtml(chosenAddr.address || '').replace(/\n/g, '<br>');
+
+    const combined = `${label ? label : ''}${label && name ? ' - ' : ''}${name ? name : ''}`;
+
+    addrBlock.innerHTML = `
+      <div class="order-address-head">
+        <span class="title">Address</span>
+        <a href="drafamt.html" class="edit-link small">Edit</a>
+      </div>
+      <div class="order-address-body">
+        <div class="line-combined">${combined}</div>
+        ${phone ? `<div class="line-phone">${phone}</div>` : ''}
+        <div class="line-address">${addrHtml}</div>
+      </div>
+    `;
+    panel.appendChild(addrBlock);
+  }
+
+  // ===== NOTE PEMBAYARAN (DINAMIS) =====
+  const rawPaymentStatus = (order.paymentStatus || 'pending').toLowerCase();
+  const rawStatus = (order.status || '').toLowerCase();
+  const isPaid = rawPaymentStatus === 'paid';
+  const isRejected = rawPaymentStatus === 'rejected' || rawStatus === 'cancelled';
+
+  const note = document.createElement('div');
+  let noteClass = 'pending';
+  let noteHtml = '';
+
+  if (isPaid) {
+    noteClass = 'paid';
+    noteHtml =
+      '<div>Status pesanan: <strong>Pesanan ' + escapeHtml(order.id || '') + ' sudah dibayar.</strong></div>' +
+      '<div class="status">Pembayaran sudah diterima admin ✅</div>' +
+      '<div class="track-hint">Anda dapat men-track order Anda dari halaman Orders / Active.</div>';
+  } else if (isRejected) {
+    note.innerHTML =
+      '<div style="font-weight:600">⛔ Orderan ini dicancel oleh admin</div>' +
+      '<div class="status">Status pembayaran: <strong style="color:#c00">Ditolak admin</strong></div>' +
+      '<div class="track-hint" style="color:#c00">Silakan hubungi admin jika ada kesalahan.</div>';
+  } else {
+    noteClass = 'pending';
+    noteHtml =
+      '<div>Segera melakukan pembayaran melalui WhatsApp kepada toko agar orderan Anda dapat di-ACC.</div>' +
+      '<div class="status">Status pembayaran: <strong>Pembayaran belum diterima admin</strong></div>';
+  }
+
+  if (!isRejected) {
+    note.className = 'order-payment-note ' + noteClass;
+    note.innerHTML = noteHtml;
+  }
+  panel.appendChild(note);
+
+  const tot = document.createElement('div');
+  tot.style.marginTop = '12px';
+  tot.style.fontWeight = '700';
+  tot.textContent = 'Total: ' + fmt(order.total);
+  panel.appendChild(tot);
+
+  const back = document.createElement('div');
+  back.style.marginTop = '12px';
+  back.innerHTML =
+    '<button class="btn-light" id="back-to-summary">Back to summary</button>';
+  panel.appendChild(back);
+
+  const backBtn = back.querySelector('#back-to-summary');
+  if (backBtn) {
+    backBtn.addEventListener('click', function () {
+      renderAllLists();
+    });
+  }
+}
+
+
+
+
+
+
 
   // ===== BADGE NOTIF DI LONCENG =====
   // ===== BADGE NOTIF DI LONCENG =====

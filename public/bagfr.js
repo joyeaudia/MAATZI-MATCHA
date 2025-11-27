@@ -32,15 +32,16 @@
     const container = document.getElementById('bag-items') ||
                       document.querySelector('.cart-list') ||
                       document.querySelector('.bag-items');
-    if (!container) return;
-    container.innerHTML = '';
+if (!items.length){
+  container.innerHTML = `
+    <div class="empty-bag">
+      <img src="acs/bag1.png" alt="Keranjang kosong">
+    </div>
+  `;
+  updateSummaryTotal();
+  return;
+}
 
-    if (!items.length){
-      container.innerHTML =
-        '<p class="empty" style="text-align:center;color:#666;padding:18px 0">Keranjang kosong.</p>';
-      updateSummaryTotal();
-      return;
-    }
 
     let total = 0;
     items.forEach((it, idx) => {
@@ -382,6 +383,7 @@
       items: items
     };
   }
+  
 
   // klik tombol Checkout
   document.addEventListener('click', function(e){
@@ -422,4 +424,5 @@
     window.location.href = 'gif.html';
   });
 
-})();  // end checkout IIFE
+})();  
+// end checkout IIFE

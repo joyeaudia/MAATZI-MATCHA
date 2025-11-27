@@ -648,3 +648,16 @@ ooter style: price + heart aligned horizontally */
 .nav-btn span {
   text-decoration: none;
 }
+
+.empty-bag {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 40px;
+}
+
+.empty-bag img {
+  width: 200px; /* atur sesuai selera */
+  opacity: 0.85;
+}
