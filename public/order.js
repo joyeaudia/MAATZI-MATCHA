@@ -375,36 +375,45 @@ function renderHistory() {
   }
 
   // ===== TAB SWITCHING =====
-  function attachTabHandlers() {
-    document.querySelectorAll('[data-order-tab],[data-tab]').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const targetName = this.dataset.orderTab || this.dataset.tab;
-        if (!targetName) return;
+function attachTabHandlers() {
+  document.querySelectorAll('[data-order-tab],[data-tab]').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const targetName = this.dataset.orderTab || this.dataset.tab;
+      if (!targetName) return;
 
-        const nameToId = {
-          active: 'tab-active',
-          scheduled: 'tab-scheduled',
-          schedule: 'tab-schedule',
-          history: 'tab-history'
-        };
-        const targetId = nameToId[targetName] || targetName;
+      const nameToId = {
+        active: 'tab-active',
+        scheduled: 'tab-scheduled',
+        schedule: 'tab-schedule',
+        history: 'tab-history'
+      };
+      const targetId = nameToId[targetName] || targetName;
 
-        const panels = ['tab-active', 'tab-scheduled', 'tab-schedule', 'tab-history'];
-        panels.forEach(id => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.style.display = (id === targetId) ? '' : 'none';
-        });
+      const panels = ['tab-active', 'tab-scheduled', 'tab-schedule', 'tab-history'];
+      panels.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
 
-        document.querySelectorAll('[data-order-tab],[data-tab]').forEach(tb => {
-          const name = tb.dataset.orderTab || tb.dataset.tab;
-          const isActive = name === targetName;
-          tb.classList.toggle('tab-active', isActive);
-          tb.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
+        const isActive = id === targetId;
+
+        // atur display
+        el.style.display = isActive ? '' : 'none';
+
+        // ⬅️ FIX PENTING: kontrol class .hidden juga
+        el.classList.toggle('hidden', !isActive);
+      });
+
+      // toggle state tombol tab
+      document.querySelectorAll('[data-order-tab],[data-tab]').forEach(tb => {
+        const name = tb.dataset.orderTab || tb.dataset.tab;
+        const isActive = name === targetName;
+        tb.classList.toggle('tab-active', isActive);
+        tb.setAttribute('aria-selected', isActive ? 'true' : 'false');
       });
     });
-  }
+  });
+}
+
 
   // ===== init =====
   document.addEventListener('DOMContentLoaded', function () {
