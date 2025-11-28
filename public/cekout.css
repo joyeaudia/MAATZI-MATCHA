@@ -341,3 +341,61 @@ body{
   border:none;
   padding:0;
 }
+/* --- DDNO splash overlay --- */
+.ddno-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;              /* default: sembunyi */
+  justify-content: center;
+  align-items: center;
+  background: #000;           /* biar keliatan frame di tengah */
+}
+
+.ddno-overlay.show {
+  display: flex;              /* waktu show: jadi flex */
+}
+
+.ddno-frame {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: #fafafa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.ddno-logo-wrapper {
+  width: 75%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ddno-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.ddno-logo.show {
+  opacity: 1;
+  transform: scale(1);
+  animation: ddnoPulse 1.2s ease-in-out 0.3s infinite alternate;
+}
+
+@keyframes ddnoPulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.06);
+  }
+}

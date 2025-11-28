@@ -399,7 +399,7 @@ try {
       try { localStorage.removeItem('cart'); } catch (e) { /* ignore */ }
       try { localStorage.removeItem('giftConfig_v1'); } catch (e) { /* ignore */ }
 
-      // WhatsApp ke admin (mirip flow dari bagfr.js)
+      // WhatsApp ke admin (mirip flow dari bagfr.js) + splash ddno dulu
       try {
         const waNumber = '628118281416';
         let waText = '';
@@ -417,13 +417,39 @@ try {
         }
 
         const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
-        window.open(waUrl, '_blank');
-      } catch (e) {
-        console.warn('Failed to open WhatsApp', e);
-      }
 
-      // redirect to order.html with order id
-      window.location.href = './order.html?order=' + encodeURIComponent(order.id);
+        // --- TAMPILKAN SPLASH DDNO DULU ---
+        const overlay = document.getElementById('ddno-overlay');
+        const logo = document.getElementById('ddno-logo');
+
+        if (overlay) {
+          overlay.classList.add('show');
+        }
+        if (logo) {
+          // reset dulu biar animasi bisa replay
+          logo.classList.remove('show');
+          setTimeout(() => {
+            logo.classList.add('show');
+          }, 50);
+        }
+
+        // setelah 1.5 detik baru buka WA + masuk ke order.html
+        setTimeout(() => {
+          try {
+            window.open(waUrl, '_blank');
+          } catch (err) {
+            console.warn('Failed to open WhatsApp', err);
+          }
+
+          window.location.href =
+            './order.html?order=' + encodeURIComponent(order.id);
+        }, 1500);
+      } catch (e) {
+        console.warn('Failed to prepare WhatsApp redirect', e);
+        // fallback: langsung ke order page kalau ada error
+        window.location.href =
+          './order.html?order=' + encodeURIComponent(order.id);
+      }
     });
   }
 
