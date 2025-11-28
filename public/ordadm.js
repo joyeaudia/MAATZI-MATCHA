@@ -107,9 +107,7 @@
     const status = (order.status || 'active').toLowerCase();
     const paymentStatus = (order.paymentStatus || 'pending').toLowerCase();
 
-    // address: pakai default savedAddresses_v1
-    // address: PRIORITAS ke recipient khusus order (meta.recipient),
-    // kalau kosong baru fallback ke default savedAddresses_v1
+    // ===== address / recipient untuk admin =====
     const rawRecipient =
       order.meta && typeof order.meta.recipient === 'string'
         ? order.meta.recipient.trim()
@@ -152,11 +150,7 @@
       `;
     }
 
-
-    const first = order.items && order.items[0];
-    const moreCount = Math.max(0, (order.items || []).length - 1);
-    const firstTitle = first ? escapeHtml(first.title) : 'No title';
-
+    // ===== GIFT INFO (kalau ada) =====
     const isGift = !!order.isGift && !!order.gift;
     let giftInfoHtml = '';
 
@@ -190,8 +184,37 @@
       `;
     }
 
+    // ===== ITEMS DETAIL UNTUK ADMIN =====
+    let itemsHtml = '';
 
+    (order.items || []).forEach(it => {
+      if (!it) return;
 
+      const title = escapeHtml(it.title || '');
+
+      const addonsHtml =
+        it.addons && it.addons.length
+          ? '<div class="admin-item-addons">' +
+            it.addons.map(a => escapeHtml(a.label || '')).join(', ') +
+            '</div>'
+          : '';
+
+      const qty = Number(it.qty || 0);
+      const unit = Number(it.unitPrice || it.price || 0);
+      const lineTotal = Number(it.subtotal || (unit * qty));
+      const priceLine =
+        qty + ' × ' + fmt(unit) + ' = ' + fmt(lineTotal);
+
+      itemsHtml += `
+        <div class="admin-item-row">
+          <div class="admin-item-main">
+            <div class="admin-item-title">${title}</div>
+            ${addonsHtml}
+            <div class="admin-item-price">${escapeHtml(priceLine)}</div>
+          </div>
+        </div>
+      `;
+    });
 
     const badgePaymentClass =
       paymentStatus === 'paid' ? 'badge-payment paid' :
@@ -213,7 +236,7 @@
       ${giftInfoHtml}
 
       <div class="admin-items">
-        <div>${firstTitle}${moreCount > 0 ? ' +' + moreCount + ' more' : ''}</div>
+        ${itemsHtml}
       </div>
 
       ${addrBlock}
@@ -223,7 +246,6 @@
         <button class="btn btn-reject" data-id="${escapeHtml(order.id)}">Tolak order</button>
       </div>
     `;
-
 
     const approveBtn = card.querySelector('.btn-approve');
     const rejectBtn  = card.querySelector('.btn-reject');
@@ -280,8 +302,6 @@
 
       // ide kamu: hanya setelah payment sudah "paid" boleh ke halaman tracking admin
       if (paymentStatus !== 'paid') {
-        // opsional: kasih info kecil
-        // alert('Order harus di-ACC dulu sebelum tracking pengiriman.');
         return;
       }
 
