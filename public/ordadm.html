@@ -8,14 +8,22 @@
 </head>
 <body>
   <div class="admin-shell">
+
     <header class="admin-header">
       <h1>Admin — Orders</h1>
-      <p class="subtitle">ACC / tolak order dan ubah status pembayaran.</p>
+
+      <div class="admin-filter-pills">
+        <button type="button" class="admin-pill is-active" data-filter="all">Semua</button>
+        <button type="button" class="admin-pill" data-filter="gift">Gift saja</button>
+        <button type="button" class="admin-pill" data-filter="history">History</button>
+      </div>
     </header>
 
     <main id="admin-content" class="admin-content">
-      <!-- list orders akan di-render via admin.js -->
+      <!-- list order akan dirender oleh ordadm.js ke dalam div ini -->
+      <div id="order-list"></div>
     </main>
+
   </div>
 
   <script src="ordadm.js"></script>
