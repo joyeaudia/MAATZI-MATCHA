@@ -1,32 +1,63 @@
-// alamat.js — robust save addresses (handles missing default checkbox, max 5 entries)
+// alamat.js — save address per user (per email) + max 5 alamat
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("form");
-  const KEY = "savedAddresses_v1";
-  const MAX_ADDR = 5; // ubah kalau mau kapasitas lain
 
-  function readStore() {
+  // 🔑 ambil email user yang lagi login
+  const rawEmail = (localStorage.getItem("maziEmail") || "").toLowerCase().trim();
+  if (!rawEmail) {
+    // kalau ga ada email berarti belum login → lempar ke sign in
+    window.location.href = "singin.html";
+    return;
+  }
+
+  const BASE_KEY   = "savedAddresses_v1";
+  const USER_KEY   = BASE_KEY + "_" + rawEmail;  // key per user
+  const LEGACY_KEY = BASE_KEY;                   // key lama global
+  const MAX_ADDR   = 5; // max alamat per akun
+
+  function safeParse(raw) {
     try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return JSON.parse(raw || "[]");
     } catch (err) {
       return [];
     }
   }
 
+  // 🔹 baca daftar alamat untuk user saat ini
+  function readStore() {
+    // 1) coba key per user
+    let arr = safeParse(localStorage.getItem(USER_KEY));
+    if (Array.isArray(arr) && arr.length) return arr;
+
+    // 2) kalau kosong, coba key lama global → migrasi
+    const legacy = safeParse(localStorage.getItem(LEGACY_KEY));
+    if (Array.isArray(legacy) && legacy.length) {
+      try {
+        localStorage.setItem(USER_KEY, JSON.stringify(legacy));
+        // optional: hapus key lama biar ga dipakai lagi
+        localStorage.removeItem(LEGACY_KEY);
+      } catch (e) {
+        console.warn("Failed migrating legacy addresses", e);
+      }
+      return legacy;
+    }
+
+    // 3) bener2 ga ada data
+    return [];
+  }
+
   function writeStore(arr) {
     try {
-      localStorage.setItem(KEY, JSON.stringify(arr));
+      localStorage.setItem(USER_KEY, JSON.stringify(arr || []));
     } catch (e) {
       console.error("Failed to write addresses to localStorage", e);
     }
   }
 
-  form.addEventListener("submit", function(e){
+  form.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    // read inputs
+    // read inputs (ID sesuai alamat.html kamu)
     const label = (document.getElementById("address-label")?.value || "").trim() || "Other";
     const name = (document.getElementById("recipient-name")?.value || "").trim();
     const phone = (document.getElementById("phone-number")?.value || "").trim();
@@ -37,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // safe read of checkbox (may be missing in markup)
     const defaultEl = document.getElementById("default-address");
-    const isDefault = !!(defaultEl && defaultEl.checked);
+    let isDefault = !!(defaultEl && defaultEl.checked);
 
     // basic validation (name + phone + street)
     if (!name || !phone || !street) {
@@ -45,7 +76,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const addressText = `${street}\n${city}${city && province ? ', ' : ''}${province}\n${postal}`;
+    const addressText = `${street}\n${city}${city && province ? ", " : ""}${province}\n${postal}`;
+
+    const list = readStore();
+
+    // enforce max count
+    if (list.length >= MAX_ADDR) {
+      alert(`Maksimum ${MAX_ADDR} alamat saja. Hapus salah satu jika ingin menambah lagi.`);
+      return;
+    }
+
+    // kalau belum ada sama sekali, paksa alamat pertama jadi default
+    if (list.length === 0) {
+      isDefault = true;
+    }
 
     const newAddress = {
       label,
@@ -55,48 +99,37 @@ document.addEventListener("DOMContentLoaded", () => {
       isDefault: !!isDefault
     };
 
-    // read existing
-    const arr = readStore();
-
-    // enforce max count
-    if (arr.length >= MAX_ADDR) {
-      alert(`Maksimum ${MAX_ADDR} alamat saja. Hapus salah satu jika ingin menambah lagi.`);
-      return;
+    // kalau set default, unset default alamat lain
+    if (newAddress.isDefault) {
+      list.forEach(a => { a.isDefault = false; });
     }
 
-    // if set default, unset others
-    if (newAddress.isDefault) arr.forEach(a => a.isDefault = false);
-
-    arr.push(newAddress);
-    writeStore(arr);
+    list.push(newAddress);
+    writeStore(list);
 
     // bentuk teks siap tempel ke Recipient (nama + telp + alamat lengkap)
     const recipientText = `${name}\n${phone}\n${addressText}`;
 
-    // cek apakah datang dari flow checkout (alamat.html?from=checkout)
+    // cek parameter ?from=
     const params = new URLSearchParams(window.location.search);
-    const from = params.get('from');
-
-    const fromCheckout = from === 'checkout';
-    const fromSignup   = from === 'signup';
+    const from = params.get("from");
+    const fromCheckout = from === "checkout";
+    const fromSignup   = from === "signup";
 
     if (fromCheckout) {
       // dipanggil dari halaman checkout → balik ke checkout
       try {
-        localStorage.setItem('checkoutRecipientDraft_v1', recipientText);
+        localStorage.setItem("checkoutRecipientDraft_v1", recipientText);
       } catch (e) {}
-
-      window.location.href = 'cekout.html';
+      window.location.href = "cekout.html";
 
     } else if (fromSignup) {
       // user baru selesai isi alamat pertama → ke Home
-      window.location.href = 'Home.html';
+      window.location.href = "Home.html";
 
     } else {
       // flow biasa (misal dari drafamt / profile) → balik ke list alamat
-      window.location.href = 'drafamt.html';
+      window.location.href = "drafamt.html";
     }
-
-
   });
 });

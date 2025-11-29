@@ -197,7 +197,16 @@
       });
     });
 
-    // 🔐 LOGIN LOGIC: bedakan admin vs user biasa
+    const USERS_KEY = 'maziUsers_v1';
+
+    function loadUsers() {
+      try {
+        return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
     document.getElementById('signInBtn').addEventListener('click', () => {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
@@ -207,25 +216,74 @@
         return;
       }
 
-      // kredensial admin khusus
+      // 🔐 kredensial admin khusus (bypass maziUsers_v1)
       const ADMIN_EMAIL = 'byverent@gmail.com';
       const ADMIN_PASS = '5Bisnis2021';
 
       if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-        // role admin
         localStorage.setItem('maziRole', 'admin');
         localStorage.setItem('maziEmail', email);
-
-        // arahkan ke dashboard admin
         window.location.href = 'frsadm.html';
-      } else {
-        // role user biasa
-        localStorage.setItem('maziRole', 'user');
-        localStorage.setItem('maziEmail', email);
-
-        // halaman utama user
-        window.location.href = 'Home.html';
+        return;
       }
+
+      // 🔎 cari user biasa di "database" lokal (hasil Sign Up)
+      const users = loadUsers();
+      const user = users.find(
+        u => (u.email || '').toLowerCase() === email.toLowerCase()
+      );
+
+      if (!user) {
+        alert('Email belum terdaftar. Silakan Sign Up dulu ya 🙂');
+        return;
+      }
+
+      if (user.password !== password) {
+        alert('Password salah. Coba lagi ya 😊');
+        return;
+      }
+
+      // ✅ login user berhasil
+      localStorage.setItem('maziRole', 'user');
+      localStorage.setItem('maziEmail', user.email);
+      localStorage.setItem('maziName', user.name || '');
+      localStorage.setItem('maziPhone', user.phone || '');
+
+      // 🔄 siapkan profile untuk prl.html
+      const parts = (user.name || '').split(/\s+/);
+      const firstName = parts[0] || '';
+      const lastName = parts.slice(1).join(' ');
+
+      const existingRaw = localStorage.getItem('profile');
+      let profile = null;
+      try {
+        profile = JSON.parse(existingRaw || 'null');
+      } catch {
+        profile = null;
+      }
+
+      if (!profile || (profile.email || '').toLowerCase() !== user.email.toLowerCase()) {
+        profile = {
+          firstName,
+          lastName,
+          email: user.email,
+          phone: user.phone || '',
+          memberSince: new Date().getFullYear()
+        };
+      } else {
+        // kalau sudah ada profile dengan email sama, update nama/phone saja
+        profile = {
+          ...profile,
+          firstName,
+          lastName,
+          phone: user.phone || profile.phone
+        };
+      }
+
+      localStorage.setItem('profile', JSON.stringify(profile));
+
+      // 🚀 masuk ke Home user
+      window.location.href = 'Home.html';
     });
   </script>
 </body>

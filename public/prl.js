@@ -1,21 +1,20 @@
-// prl.js — show profile + connected default shipping address from savedAddresses_v1
+// prl.js — Profile + default address per user (berdasarkan email)
 (function () {
   const DEFAULT_PROFILE = {
     firstName: 'Veren',
     lastName: 'Florensa',
     email: 'verentflorensa@gmail.com',
     phone: '08118281416',
-    address: 'Green Lake City cluster Europe,\\nKetapang, Cipondoh.\\nTangerang, Banten 15147',
+    address: 'Green Lake City cluster Europe,\nKetapang, Cipondoh.\nTangerang, Banten 15147',
     memberSince: '2024'
   };
 
   const PROFILE_KEY = 'profile';
-  const ADDR_KEY = 'savedAddresses_v1';
+  const GLOBAL_ADDR_KEY = 'savedAddresses_v1'; // key lama (global, sebelum per-user)
 
   function safeParseJSON(raw, fallback) {
     try {
-      const parsed = JSON.parse(raw);
-      return parsed;
+      return JSON.parse(raw);
     } catch (e) {
       return fallback;
     }
@@ -32,29 +31,58 @@
     }
   }
 
+  // 🔹 Ambil daftar alamat:
+  // - Kalau ada email login → pakai key per-user: savedAddresses_v1_<email>
+  // - Kalau kosong → coba key lama global, dan migrasi ke key per-user
   function getSavedAddresses() {
-    const raw = localStorage.getItem(ADDR_KEY);
-    const parsed = safeParseJSON(raw, null);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
+    const emailRaw = (localStorage.getItem('maziEmail') || '').toLowerCase().trim();
+
+    // Tidak ada info email → pakai key global saja (behaviour lama)
+    if (!emailRaw) {
+      const globalArr = safeParseJSON(localStorage.getItem(GLOBAL_ADDR_KEY), null);
+      return Array.isArray(globalArr) ? globalArr : [];
+    }
+
+    const USER_KEY = GLOBAL_ADDR_KEY + '_' + emailRaw;
+
+    // 1) coba key per-user
+    let perUserArr = safeParseJSON(localStorage.getItem(USER_KEY), null);
+    if (Array.isArray(perUserArr) && perUserArr.length) {
+      return perUserArr;
+    }
+
+    // 2) kalau belum ada, coba key global lama → migrasi ke per-user
+    const globalArr = safeParseJSON(localStorage.getItem(GLOBAL_ADDR_KEY), null);
+    if (Array.isArray(globalArr) && globalArr.length) {
+      try {
+        localStorage.setItem(USER_KEY, JSON.stringify(globalArr));
+        // optional: hapus key global supaya ke depan semua pakai per-user
+        // localStorage.removeItem(GLOBAL_ADDR_KEY);
+      } catch (e) {
+        console.warn('Failed to migrate addresses to per-user key', e);
+      }
+      return globalArr;
+    }
+
+    return [];
   }
 
   function chooseAddress(arr) {
     if (!arr || !arr.length) return null;
-    const def = arr.find(a => a.isDefault);
+    const def = arr.find(a => a && a.isDefault);
     return def || arr[0] || null;
   }
 
-  function escapeHtml(s){
-    return String(s||'')
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
+  function escapeHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  function nl2br_escaped(s){
+  function nl2br_escaped(s) {
     return escapeHtml(s).replace(/\n/g, '<br>');
   }
 
@@ -69,7 +97,7 @@
   }
 
   function render() {
-    // profile basics
+    // 🔹 isi basic profile
     const p = getProfile();
     setText('name-first', p.firstName || '');
     setText('name-last', p.lastName || '');
@@ -77,18 +105,16 @@
     setText('phone-val', p.phone || '');
     setText('member-since', p.memberSince || '');
 
-    // address: prefer savedAddresses_v1
+    // 🔹 ambil alamat dari savedAddresses (per-user)
     const addrs = getSavedAddresses();
     const chosen = chooseAddress(addrs);
 
     if (chosen) {
-      // Build combined "Label - Name" first line, then phone + address below
       const label = escapeHtml(chosen.label || '');
       const name = escapeHtml(chosen.name || '');
       const phone = escapeHtml(chosen.phone || '');
       const addr = nl2br_escaped(chosen.address || '');
 
-      // Combined first line: "Label - Name"
       const combined = `${label ? label : ''}${label && name ? ' - ' : ''}${name ? name : ''}`;
 
       const html = `
@@ -98,17 +124,11 @@
       `;
       setText('address-text', html, { allowHtml: true });
     } else {
-      // fallback to profile.address (if any)
-      setText('address-text', (p.address || ''), { allowHtml: true });
+      // fallback ke alamat default di profile kalau belum ada savedAddresses
+      const addr = nl2br_escaped(p.address || '');
+      setText('address-text', addr, { allowHtml: true });
     }
   }
-
-  // Listen to any storage changes for profile or addresses
-  window.addEventListener('storage', function (ev) {
-    if (ev.key === PROFILE_KEY || ev.key === ADDR_KEY) {
-      render();
-    }
-  });
 
   document.addEventListener('DOMContentLoaded', render);
 })();

@@ -1,115 +1,245 @@
-body {
-    /* 1. Hapus margin & padding 1px yang tidak diperlukan, 
-          tambahkan Flexbox untuk pemusatan penuh layar. */
-    margin: 0;
-    padding: 0;
-    background-color: #f8fafa;
-    font-family: 'rasa';
-    
-    display: flex; /* Aktifkan Flexbox */
-    justify-content: center; /* Pusatkan horizontal */
-    align-items: center; /* Pusatkan vertikal */
-    min-height: 100vh; /* Pastikan Body setinggi viewport */
+/* ===== Layout dasar ===== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 12px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background:
+    radial-gradient(circle at top left, #e0f2fe 0, transparent 55%),
+    radial-gradient(circle at bottom right, #fee2e2 0, transparent 55%),
+    #f5f5f7;
+  color: #111827;
+}
+
+/* ===== Card wrapper ===== */
 
 .sign-up-page {
-    width: 350px;
-    /* 2. KRUSIAL: Ubah HEIGHT menjadi auto atau hapus. 
-          Ini memungkinkan kontainer menyesuaikan tinggi konten di dalamnya. */
-    height: auto; 
-    
-    /* 3. Hapus margin: 40px auto; karena sudah dipusatkan oleh body Flexbox. */
-    /* margin: 40px auto; */
-    
-    /* Hapus juga align-items: center; karena konten (kartu) sudah auto-size */
-    /* display: flex;
-    justify-content: center;
-    align-items: center; */
-    
-    /* Tetap pertahankan gaya visual kontainer luar (biru muda) */
-    background-color: #f4efef;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.041);
+  width: 100%;
+  max-width: 420px;
 }
 
- .card {
-    width: 85%;
-    background-color: #f4efef;
-    border-radius: 15px;
-    padding: 30px 25px; 
-    
-    /* Hapus Box-Shadow lama */
-    box-shadow: none; 
-
-    /* Gunakan filter untuk efek bayangan yang lebih lembut/menyerupai margin */
-    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
+.card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 26px;
+  padding: 28px 22px 24px;
+  box-shadow:
+    0 18px 60px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(229, 231, 235, 0.6);
 }
 
-/* ... Properti CSS lainnya tetap sama ... */
+/* ===== Heading ===== */
+
 .card h2 {
-    text-align: center;
-    margin-bottom: 35px;
-    font-size: 25px;
-    font-weight: 600;
+  text-align: center;
+  margin: 0 0 20px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-form label {
-    font-size: 14px;
-    font-weight: 500;
-    display: block;
-    margin-top: 10px;
-    margin-bottom: 5px;
+/* ===== Form & fields ===== */
+
+#signup-form {
+  display: flex;
+  flex-direction: column;
 }
 
-form input {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    background-color: #f2f2f2;
-    border-radius: 8px;
-    font-size: 14px;
+label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  margin-top: 10px;
+  color: #111827;
 }
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"] {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f4f4f5;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+input::placeholder {
+  color: #9ca3af;
+}
+
+input:hover {
+  background: #f9fafb;
+}
+
+input:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.8),
+    0 0 0 6px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ===== Password wrapper ===== */
 
 .password-wrapper {
-    position: relative;
+  position: relative;
+  margin-bottom: 2px;
 }
 
-.password-wrapper .toggle {
-    position: absolute;
-    right: 10px;
-    top: 9px;
-    cursor: pointer;
-    user-select: none;
+.password-wrapper input {
+  padding-right: 34px;
 }
+
+.toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.7;
+  padding: 3px 5px;
+  border-radius: 999px;
+}
+
+.toggle:hover {
+  background: rgba(148, 163, 184, 0.16);
+  opacity: 0.9;
+}
+
+/* Hint password */
+.pw-hint {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0 2px 6px;
+}
+
+/* ===== Button ===== */
 
 .create-btn {
-    width: 45%; /* Diubah dari 40% ke 70% agar tombol lebih besar/standar */
-    margin: 22px auto;
-    display: block;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    font-size: 15px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
+  margin-top: 18px;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 16px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.12s ease;
 }
 
 .create-btn:hover {
-    filter: brightness(120%); 
-    background-color: #007bff;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.45);
+  filter: brightness(1.02);
 }
 
+.create-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.3);
+}
+
+/* ===== Sign in link ===== */
+
 .signin-text {
-    text-align: center;
-    font-size: 13px;
-    margin-top: 15px;
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  color: #4b5563;
 }
 
 .signin-text a {
-    text-decoration: none;
-    color: #000305;
-    font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signin-text a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Responsive touch ===== */
+
+@media (max-width: 480px) {
+  body {
+    padding: 18px 10px;
+  }
+
+  .card {
+    padding: 24px 18px 20px;
+    border-radius: 22px;
+  }
+
+  .card h2 {
+    font-size: 22px;
+  }
+}
+/* ===== Custom Modal Alert ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 18px 20px 16px;
+  width: 85%;
+  max-width: 320px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  animation: fadeInUp .22s ease-out;
+}
+
+#alertText {
+  font-size: 14px;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+#alertClose {
+  padding: 8px 16px;
+  background: #2563eb;
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Animasi Modal */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

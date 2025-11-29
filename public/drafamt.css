@@ -161,3 +161,40 @@ input[type="radio"]{width:18px;height:18px}
   color: #222;
   margin-bottom: 6px;
 }
+
+
+.add-new.disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: auto; /* masih bisa di-click, tapi kita cegat di JS */
+}
+.hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 4px 0 10px;
+  text-align: right;
+}
+/* tombol X merah di pojok kanan atas card */
+.addr-delete{
+  position:absolute;
+  top:10px;
+  left:10px;
+  width:14px;
+  height:14px;
+  border-radius:999px;
+  border:1px solid #f97373;
+  background:#fee2e2;
+  color:#b91c1c;
+  font-size:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+}
+
+.addr-delete:hover{
+  background:#fecaca;
+}
+
+

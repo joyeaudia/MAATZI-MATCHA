@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,80 +11,49 @@
   <div class="sign-up-page">
     <div class="card">
       <h2>Create Account</h2>
+
       <form id="signup-form" onsubmit="return false;">
-        <label for="fullname">Full Name</label>
+        <label>Full Name</label>
         <input type="text" id="fullname" placeholder="Your full name" required />
 
-        <label for="email">Email Address</label>
+        <label>Email Address</label>
         <input type="email" id="email" placeholder="you@example.com" required />
 
-        <label for="phone">Phone Number</label>
+        <label>Phone Number</label>
         <input type="tel" id="phone" placeholder="08xxxxxxxx" required />
 
-        <label for="password">Password</label>
+        <label>Password</label>
         <div class="password-wrapper">
           <input type="password" id="password" placeholder="********" required />
-          <span class="toggle">👁️</span>
+          <span class="toggle"></span>
         </div>
+        <small class="pw-hint">
+          Min 8 karakter, huruf besar & kecil, angka, simbol
+        </small>
 
-        <label for="confirm-password">Confirm Password</label>
+        <label>Confirm Password</label>
         <div class="password-wrapper">
           <input type="password" id="confirm-password" placeholder="********" required />
-          <span class="toggle">👁️</span>
+          <span class="toggle"></span>
         </div>
 
-        <!-- Tombol Create Account -->
         <button type="button" class="create-btn" id="createAccountBtn">Create Account</button>
 
         <p class="signin-text">
-          Already have an account?
-          <a href="singin.html">Sign In</a>
+          Already have an account? <a href="singin.html">Sign In</a>
         </p>
       </form>
     </div>
   </div>
-
-  <script>
-    // 🔹 Show / Hide password
-    document.querySelectorAll('.toggle').forEach(icon => {
-      icon.addEventListener('click', () => {
-        const input = icon.previousElementSibling;
-        input.type = input.type === 'password' ? 'text' : 'password';
-        icon.textContent = input.type === 'password' ? '👁️' : '🙈';
-      });
-    });
-
-    // 🔹 Create Account → role "user" lalu ke Home
-    document.getElementById("createAccountBtn").addEventListener("click", () => {
-      const name = document.getElementById('fullname').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const pass = document.getElementById('password').value;
-      const confirm = document.getElementById('confirm-password').value;
-
-      if (!name || !email || !phone || !pass || !confirm) {
-        alert('Lengkapi semua field dulu ya 🙂');
-        return;
-      }
-
-      if (pass !== confirm) {
-        alert('Password dan konfirmasi tidak sama.');
-        return;
-      }
-
-      // Simpan info dasar user di localStorage (sementara, sebelum Firebase)
-      localStorage.setItem('maziRole', 'user');
-      localStorage.setItem('maziEmail', email);
-      localStorage.setItem('maziName', name);
-      localStorage.setItem('maziPhone', phone);
-
-      // Arahkan ke halaman utama user
-      // Arahkan ke halaman isi alamat dulu// Arahkan ke halaman isi alamat dulu
-window.location.href = "alamat.html?from=signup";
+  <!-- Custom Alert Modal -->
+<div id="alertModal" class="modal">
+  <div class="modal-content">
+    <p id="alertText"></p>
+    <button id="alertClose">OK</button>
+  </div>
+</div>
 
 
-    });
-  </script>
+  <script src="singup.js"></script>
 </body>
-
 </html>
