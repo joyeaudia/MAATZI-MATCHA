@@ -1,4 +1,11 @@
 // cekout.js — dynamic checkout: load cart -> product summary, qty sync, place scheduled order
+import { db } from "./firebase-config.js";
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
@@ -273,7 +280,7 @@ try {
   // ---- Place Order: create scheduled order and redirect ----
   const placeOrderBtn = document.getElementById('placeOrder');
   if (placeOrderBtn) {
-    placeOrderBtn.addEventListener('click', function () {
+      placeOrderBtn.addEventListener('click', async function () {
       const cart = loadCart();
       if (!cart || !cart.length) {
         alert('Keranjang kosong — tidak ada yang dipesan.');
@@ -388,6 +395,28 @@ try {
           revealMode: giftConfig.revealMode || 'reveal',
           theme: giftConfig.theme || null
         };
+      }
+
+            // ====== SIMPAN ORDER KE FIRESTORE (untuk admin) ======
+      const uid   = localStorage.getItem("maziUID")   || null;
+      const email = localStorage.getItem("maziEmail") || "";
+      const name  = localStorage.getItem("maziName")  || "";
+
+      try {
+        const firestoreOrder = {
+          userId: uid,
+          userEmail: email,
+          userName: name,
+          ...order,
+          // createdAt dari Firestore supaya rapi di server
+          createdAt: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, "orders"), firestoreOrder);
+        console.log("Order tersimpan di Firestore dengan id:", docRef.id);
+      } catch (err) {
+        console.error("Gagal menyimpan order ke Firestore:", err);
+        // tidak perlu stop flow, biar user tetap lanjut ke WA / order page
       }
 
       // save orders (most recent first)
