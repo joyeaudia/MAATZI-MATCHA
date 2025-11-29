@@ -143,6 +143,23 @@ document.addEventListener("DOMContentLoaded", () => {
         createdAt: serverTimestamp(),
       });
 
+      // --- after setDoc(...)
+localStorage.setItem("maziUID", user.uid);
+
+// try flush queued orders (if flushOrderQueue defined globally)
+try {
+  if (typeof window.flushOrderQueue === 'function') {
+    // await so queue has chance to flush before redirect/onboarding
+    await window.flushOrderQueue();
+    console.log('flushOrderQueue completed after signup');
+  } else {
+    console.log('flushOrderQueue not present on this page');
+  }
+} catch (e) {
+  console.warn('flushOrderQueue failed after signup', e);
+}
+
+
       localStorage.setItem("maziRole", role);
       localStorage.setItem("maziEmail", email);
       localStorage.setItem("maziName", name);

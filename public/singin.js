@@ -57,11 +57,28 @@ if (signInBtn) {
       const name = data.name || user.displayName || "";
       const phone = data.phone || "";
 
-      // 🪪 Simpan session di localStorage
-      localStorage.setItem("maziRole", role);
-      localStorage.setItem("maziEmail", email);
-      localStorage.setItem("maziName", name);
-      localStorage.setItem("maziPhone", phone);
+// 🪪 Simpan session di localStorage
+localStorage.setItem("maziRole", role);
+localStorage.setItem("maziEmail", email);
+localStorage.setItem("maziName", name);
+localStorage.setItem("maziPhone", phone);
+
+// ⭐️ PASTE KODE INI TEPAAT SETELAH BLOK DI ATAS ⭐️
+
+// simpan UID ke localStorage (WAJIB untuk Firestore rules)
+localStorage.setItem("maziUID", user.uid);
+
+// coba flush queue bila ada order yang gagal kirim
+try {
+  if (typeof window.flushOrderQueue === "function") {
+    await window.flushOrderQueue();
+    console.log("flushOrderQueue completed after sign-in");
+  } else {
+    console.log("flushOrderQueue not loaded on this page");
+  }
+} catch (e) {
+  console.warn("flushOrderQueue error after sign-in", e);
+}
 
       // 👤 Siapkan profile untuk prl.html
       const parts = (name || "").split(/\s+/);

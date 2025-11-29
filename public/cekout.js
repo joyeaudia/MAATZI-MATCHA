@@ -1,5 +1,7 @@
 // cekout.js — dynamic checkout: load cart -> product summary, qty sync, place scheduled order
-import { db } from "./firebase-config.js";
+import { db, auth } from "./firebase-config.js";
+window._auth_for_debug = auth;
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import {
   collection,
   addDoc,
@@ -35,6 +37,77 @@ document.addEventListener('DOMContentLoaded', function () {
   function genOrderId() {
     return 'ORD-' + new Date().toISOString().slice(0, 10) + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
   }
+
+  // -----------------------------
+  // Local queue helpers (order sync fallback)
+  // -----------------------------
+  function getUserKeyOrders() {
+    const uid = localStorage.getItem('maziUID') || null;
+    const email = (localStorage.getItem('maziEmail') || '').trim().toLowerCase();
+    if (uid) return 'orders_' + uid;
+    if (email) return 'orders_' + email.replace(/[@.]/g,'_');
+    return 'orders_anon';
+  }
+
+  function enqueueLocalOrder(order) {
+    try {
+      const qKey = 'order_sync_queue';
+      const raw = localStorage.getItem(qKey) || '[]';
+      const arr = JSON.parse(raw);
+      arr.push(order);
+      localStorage.setItem(qKey, JSON.stringify(arr));
+      console.log('Order queued locally for sync (queue length):', arr.length);
+    } catch (e) {
+      console.error('enqueueLocalOrder failed', e);
+    }
+  }
+
+  async function flushOrderQueue() {
+    try {
+      const qKey = 'order_sync_queue';
+      const raw = localStorage.getItem(qKey) || '[]';
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || arr.length === 0) return;
+
+      const user = auth.currentUser;
+      if (!user) {
+        console.warn('flushOrderQueue: no authenticated user — skip flush until login.');
+        return;
+      }
+
+      console.log('Flushing order sync queue, items:', arr.length);
+
+      for (let i = 0; i < arr.length; i++) {
+        const o = arr[i];
+        try {
+          const firestoreOrder = {
+            userId: user.uid,
+            userEmail: user.email || (localStorage.getItem('maziEmail') || ''),
+            userName: localStorage.getItem('maziName') || '',
+            ...o,
+            createdAt: serverTimestamp()
+          };
+
+          const docRef = await addDoc(collection(db, "orders"), firestoreOrder);
+          console.log('Flushed order -> firestore id:', docRef.id, 'local order id:', o.id);
+
+          // remove this item from queue
+          arr.splice(i, 1);
+          i--;
+        } catch (err) {
+          console.warn('flushOrderQueue: failed to push one order, will retry later', err);
+          break;
+        }
+      }
+
+      localStorage.setItem(qKey, JSON.stringify(arr));
+    } catch (e) {
+      console.error('flushOrderQueue failed', e);
+    }
+  }
+
+  // expose flushOrderQueue to window so sign-in page can call it if needed
+  window.flushOrderQueue = flushOrderQueue;
 
   // ---- safe html escape ----
   function escapeHtml(s) {
@@ -91,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
       dateSel.appendChild(opt('', 'Date'));
       for (let d = 1; d <= days; d++) dateSel.appendChild(opt(d, d));
 
-      // keep previous if valid, else choose today if same month/year, else 1
       if (prevValue >= 1 && prevValue <= days) {
         dateSel.value = String(prevValue);
       } else if (selYear === curYear && selMonth === (now.getMonth() + 1)) {
@@ -101,7 +173,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // default: current month/year and refill dates
     monthSel.value = String(now.getMonth() + 1);
     yearSel.value = String(curYear);
     refillDates();
@@ -117,24 +188,22 @@ document.addEventListener('DOMContentLoaded', function () {
   const totalEl = document.getElementById('totalRp');
   const deliveryBtns = Array.from(document.querySelectorAll('.delivery-item'));
   const deliveryRow = document.getElementById('deliveryRow');
-  // tombol "Saved Address" -> buka halaman daftar alamat dengan context checkout
-const useSavedBtn = document.getElementById('btnUseSavedAddress');
-if (useSavedBtn) {
-  useSavedBtn.addEventListener('click', function () {
-    window.location.href = 'drafamt.html?from=checkout';
-  });
-}
 
-  // kalau ada draft recipient dari halaman alamat, isi textarea otomatis
-const recipientInput = document.getElementById('recipient');
-try {
-  const draft = localStorage.getItem('checkoutRecipientDraft_v1');
-  if (recipientInput && draft) {
-    recipientInput.value = draft;
-    localStorage.removeItem('checkoutRecipientDraft_v1');
+  const useSavedBtn = document.getElementById('btnUseSavedAddress');
+  if (useSavedBtn) {
+    useSavedBtn.addEventListener('click', function () {
+      window.location.href = 'drafamt.html?from=checkout';
+    });
   }
-} catch (e) {}
 
+  const recipientInput = document.getElementById('recipient');
+  try {
+    const draft = localStorage.getItem('checkoutRecipientDraft_v1');
+    if (recipientInput && draft) {
+      recipientInput.value = draft;
+      localStorage.removeItem('checkoutRecipientDraft_v1');
+    }
+  } catch (e) {}
 
   if (!productList || !subtotalEl || !shippingEl || !totalEl) {
     console.warn('cekout: required elements not found');
@@ -151,7 +220,6 @@ try {
       li.className = 'product-item';
       li.innerHTML = `<div class="product-info"><div class="product-title">Keranjang kosong</div><div class="product-meta muted">Tambahkan produk dari keranjang</div></div>`;
       productList.appendChild(li);
-      // reset totals
       calcSubtotal();
       return;
     }
@@ -159,7 +227,6 @@ try {
     cart.forEach((it, index) => {
       const unit = Number(it.unitPrice || it.price || 0);
       const qty = Math.max(0, Number(it.qty || 1));
-      const subtotal = Number(it.subtotal || (unit * qty) || (unit * qty));
 
       const li = document.createElement('li');
       li.className = 'product-item';
@@ -181,7 +248,6 @@ try {
       `;
       productList.appendChild(li);
 
-      // handlers
       const dec = li.querySelector('.dec');
       const inc = li.querySelector('.inc');
       const input = li.querySelector('.qty-input');
@@ -209,29 +275,25 @@ try {
     });
   }
 
-  // update cart model when qty changed from UI
   function updateCartQtyFromUI(idx, qty) {
     const cart = loadCart();
     if (!cart || !cart[idx]) {
-      // if index invalid, just recalc totals
       calcSubtotal();
       return;
     }
+
     cart[idx].qty = Number(qty || 0);
     cart[idx].subtotal = Number(Number(cart[idx].unitPrice || cart[idx].price || 0) * Number(cart[idx].qty || 0));
 
-    // remove items with qty 0
     if (cart[idx].qty <= 0) {
       cart.splice(idx, 1);
     }
 
     saveCart(cart);
-    // re-render list because indices may have shifted
     renderProductsFromCart();
     calcSubtotal();
   }
 
-  // ---- delivery selection handlers ----
   deliveryBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       deliveryBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
@@ -242,7 +304,6 @@ try {
     });
   });
 
-  // ---- subtotal / shipping / total calculation ----
   function calcSubtotal() {
     const cart = loadCart();
     let totalItems = 0;
@@ -280,10 +341,18 @@ try {
   // ---- Place Order: create scheduled order and redirect ----
   const placeOrderBtn = document.getElementById('placeOrder');
   if (placeOrderBtn) {
-      placeOrderBtn.addEventListener('click', async function () {
+    placeOrderBtn.addEventListener('click', async function () {
       const cart = loadCart();
       if (!cart || !cart.length) {
         alert('Keranjang kosong — tidak ada yang dipesan.');
+        return;
+      }
+
+      // pastikan user login sebelum buat order
+      if (!auth.currentUser) {
+        try { localStorage.setItem('checkoutDraft_cart', JSON.stringify(cart)); } catch(e){}
+        alert('Silakan sign in dulu untuk melanjutkan pemesanan.');
+        window.location.href = 'singin.html?from=checkout';
         return;
       }
 
@@ -301,7 +370,6 @@ try {
         const y = Number(yearVal);
 
         if (!isNaN(d) && !isNaN(y) && monthVal) {
-          // monthVal can be numeric or month name; try mapping
           const monthMap = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
           let mIndex = Number(monthVal);
           if (isNaN(mIndex)) {
@@ -309,14 +377,11 @@ try {
             mIndex = monthMap[mm] || NaN;
           }
           if (!isNaN(mIndex)) {
-            // create local date at 09:00 (local timezone)
             const isoDate = new Date(y, mIndex - 1, d, 9, 0, 0);
             if (!isNaN(isoDate.getTime())) scheduledAt = isoDate.toISOString();
           }
         }
-      } catch (e) {
-        // ignore schedule parsing errors
-      }
+      } catch (e) {}
 
       const notes = document.getElementById('notes')?.value?.trim() || '';
       const recipient = document.getElementById('recipient')?.value?.trim() || '';
@@ -376,17 +441,14 @@ try {
           image: it.image || (it.images && it.images[0]) || ''
         })),
 
-
-
         meta: {
           notes: notes,
           recipient: recipient,
           deliveryMethod: selectedDelivery
         },
-        paymentStatus: 'pending' // biar konsisten dengan order dari bagfr.js
+        paymentStatus: 'pending'
       };
 
-      // kalau ini dari flow GIFT, tambahkan flag & detail gift
       if (isGift) {
         order.isGift = true;
         order.gift = {
@@ -397,7 +459,7 @@ try {
         };
       }
 
-            // ====== SIMPAN ORDER KE FIRESTORE (untuk admin) ======
+      // ====== SIMPAN ORDER KE FIRESTORE (untuk admin) ======
       const uid   = localStorage.getItem("maziUID")   || null;
       const email = localStorage.getItem("maziEmail") || "";
       const name  = localStorage.getItem("maziName")  || "";
@@ -408,15 +470,28 @@ try {
           userEmail: email,
           userName: name,
           ...order,
-          // createdAt dari Firestore supaya rapi di server
           createdAt: serverTimestamp()
         };
 
         const docRef = await addDoc(collection(db, "orders"), firestoreOrder);
         console.log("Order tersimpan di Firestore dengan id:", docRef.id);
+
+        order.firestoreId = docRef.id;
+
       } catch (err) {
         console.error("Gagal menyimpan order ke Firestore:", err);
-        // tidak perlu stop flow, biar user tetap lanjut ke WA / order page
+        try {
+          const queued = Object.assign({}, order, {
+            userId: uid,
+            userEmail: email,
+            userName: name,
+            queuedAt: Date.now()
+          });
+          enqueueLocalOrder(queued);
+          alert("Peringatan: koneksi ke server bermasalah. Pesanan disimpan sementara dan akan dikirim ke server saat koneksi pulih.");
+        } catch (e) {
+          console.error('Failed to enqueue order after firestore write error', e);
+        }
       }
 
       // save orders (most recent first)
@@ -428,7 +503,7 @@ try {
       try { localStorage.removeItem('cart'); } catch (e) { /* ignore */ }
       try { localStorage.removeItem('giftConfig_v1'); } catch (e) { /* ignore */ }
 
-      // WhatsApp ke admin (mirip flow dari bagfr.js) + splash ddno dulu
+      // WhatsApp ke admin + splash
       try {
         const waNumber = '628118281416';
         let waText = '';
@@ -447,7 +522,6 @@ try {
 
         const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
 
-        // --- TAMPILKAN SPLASH DDNO DULU ---
         const overlay = document.getElementById('ddno-overlay');
         const logo = document.getElementById('ddno-logo');
 
@@ -455,14 +529,12 @@ try {
           overlay.classList.add('show');
         }
         if (logo) {
-          // reset dulu biar animasi bisa replay
           logo.classList.remove('show');
           setTimeout(() => {
             logo.classList.add('show');
           }, 50);
         }
 
-        // setelah 1.5 detik baru buka WA + masuk ke order.html
         setTimeout(() => {
           try {
             window.open(waUrl, '_blank');
@@ -475,7 +547,6 @@ try {
         }, 1500);
       } catch (e) {
         console.warn('Failed to prepare WhatsApp redirect', e);
-        // fallback: langsung ke order page kalau ada error
         window.location.href =
           './order.html?order=' + encodeURIComponent(order.id);
       }
@@ -483,6 +554,28 @@ try {
   }
 
   // ---- initial render ----
+  // register auth listener to flush queue when user logs in
+  try {
+    if (typeof onAuthStateChanged === 'function') {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log('onAuthStateChanged: user logged in — attempting to flush order queue');
+          if (typeof flushOrderQueue === 'function') {
+            flushOrderQueue().catch(err => console.warn('flushOrderQueue error', err));
+          } else {
+            console.log('flushOrderQueue not defined on this page (will flush when available)');
+          }
+        } else {
+          console.log('onAuthStateChanged: no user — not flushing order queue');
+        }
+      });
+    } else {
+      console.warn('onAuthStateChanged is not a function — did you import it?');
+    }
+  } catch (e) {
+    console.warn('Failed to register auth listener', e);
+  }
+
   populateScheduleSelectors({ yearsAhead: 5 });
   renderProductsFromCart();
   calcSubtotal();
