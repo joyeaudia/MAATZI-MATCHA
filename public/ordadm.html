@@ -26,6 +26,30 @@
 
   </div>
 
+
+  <nav class="bottom-nav">
+
+ <a href="ordadm.html" class="nav-item active">
+    <img src="logos/dm2.png" class="nav-icon" alt="">
+    <span class="nav-label">Orders</span>
+  </a>
+
+  <a href="admin.html" class="nav-item">
+    <img src="logos/dm1.png" class="nav-icon" alt="">
+    <span class="nav-label">Booths</span>
+  </a>
+
+
+
   <script src="ordadm.js"></script>
+
+  <script>
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      window.location.href = "frsadm.html";
+    }
+  });
+</script>
+
 </body>
 </html>

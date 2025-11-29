@@ -75,19 +75,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // cek apakah datang dari flow checkout (alamat.html?from=checkout)
     const params = new URLSearchParams(window.location.search);
-    const fromCheckout = params.get('from') === 'checkout';
+    const from = params.get('from');
+
+    const fromCheckout = from === 'checkout';
+    const fromSignup   = from === 'signup';
 
     if (fromCheckout) {
+      // dipanggil dari halaman checkout → balik ke checkout
       try {
         localStorage.setItem('checkoutRecipientDraft_v1', recipientText);
       } catch (e) {}
 
-      // langsung balik ke halaman checkout
       window.location.href = 'cekout.html';
+
+    } else if (fromSignup) {
+      // user baru selesai isi alamat pertama → ke Home
+      window.location.href = 'Home.html';
+
     } else {
-      // flow biasa: balik ke daftar alamat
+      // flow biasa (misal dari drafamt / profile) → balik ke list alamat
       window.location.href = 'drafamt.html';
     }
+
 
   });
 });
