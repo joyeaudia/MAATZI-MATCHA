@@ -1,5 +1,5 @@
 // bagfr.js - cart renderer + likes + checkout (Firestore-enabled, cleaned + Guest Checkout)
-// Pastikan dipanggil di HTML dengan: <script type="module" src="./bagfr.js"></script>
+// Usage: <script type="module" src="./bagfr.js"></script>
 
 import { db, auth } from "./firebase-config.js";
 import { onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -22,11 +22,18 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
   const escapeHtml = (s) =>
     String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-  function loadCart() { try { return JSON.parse(localStorage.getItem('cart') || '[]'); } catch (e) { return []; } }
-  function saveCart(cart) { localStorage.setItem('cart', JSON.stringify(cart || [])); }
+  function safeParseKey(key, fallback = []) {
+    try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch (e) { return fallback; }
+  }
 
-  function loadOrders() { try { return JSON.parse(localStorage.getItem('orders') || '[]'); } catch (e) { return []; } }
-  function saveOrders(arr) { localStorage.setItem('orders', JSON.stringify(arr || [])); }
+  function saveJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v || [])); } catch(e) {} }
+
+  function loadCart() { return safeParseKey('cart', []); }
+  function saveCart(cart) { saveJSON('cart', cart); }
+
+  function loadOrdersLocal() { return safeParseKey('orders', []); }
+  function saveOrdersLocal(arr) { saveJSON('orders', arr); }
 
   /* ------------------------
      Render cart & likes
@@ -114,8 +121,8 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
   }
 
   /* Likes */
-  function loadLikes() { try { return JSON.parse(localStorage.getItem('likes') || '[]'); } catch (e) { return []; } }
-  function saveLikes(arr) { localStorage.setItem('likes', JSON.stringify(arr || [])); }
+  function loadLikes() { return safeParseKey('likes', []); }
+  function saveLikes(arr) { saveJSON('likes', arr); }
 
   function renderLikedCards() {
     const likes = loadLikes();
@@ -155,6 +162,9 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
       container.appendChild(article);
     });
   }
+
+  // Expose render functions to window so other pages/scripts can call them
+  try { window.renderCart = renderCart; window.renderLikedCards = renderLikedCards; } catch (e) { /* ignore */ }
 
   /* ------------------------
      Event delegation: cart + likes
@@ -267,14 +277,13 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
     return part1 + part2;
   }
 
-  function loadCartSafe() { try { return JSON.parse(localStorage.getItem('cart')||'[]'); } catch(e){ return []; } }
+  function loadCartSafe() { return safeParseKey('cart', []); }
 
   // local queue helpers (same strategy as cekout.js)
   function enqueueLocalOrder(order) {
     try {
       const qKey = 'order_sync_queue';
-      const raw = localStorage.getItem(qKey) || '[]';
-      const arr = JSON.parse(raw);
+      const arr = safeParseKey(qKey, []);
       arr.push(order);
       localStorage.setItem(qKey, JSON.stringify(arr));
       console.log('Bagfr: Order queued locally for sync (queue length):', arr.length);
@@ -286,8 +295,7 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
   async function flushOrderQueue() {
     try {
       const qKey = 'order_sync_queue';
-      const raw = localStorage.getItem(qKey) || '[]';
-      const arr = JSON.parse(raw);
+      const arr = safeParseKey(qKey, []);
       if (!Array.isArray(arr) || arr.length === 0) return;
 
       const user = auth.currentUser;
@@ -302,6 +310,7 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
             userEmail: user.email || (localStorage.getItem('maziEmail') || ''),
             userName: localStorage.getItem('maziName') || '',
             id: o.id,
+            // use serverTimestamp for server ordering
             createdAt: serverTimestamp(),
             status: o.status || 'active',
             paymentStatus: o.paymentStatus || 'pending',
@@ -331,11 +340,29 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
   // expose flush for console / signin page
   window.flushOrderQueue = flushOrderQueue;
 
-  // register auth listener to flush when user logs in
+  // register auth listener to flush when user logs in and keep local maziUID synced
   try {
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        // keep localStorage maziUID in sync (so other legacy code that reads it still works)
+        try { localStorage.setItem('maziUID', user.uid); } catch(e){}
+        if (user.isAnonymous) {
+          // anonymous user - don't touch maziEmail/name
+          console.log('Auth: anonymous user signed in', user.uid);
+        } else {
+          // if not anonymous, optionally sync email/name to localStorage if missing
+          try {
+            if (user.email) localStorage.setItem('maziEmail', user.email);
+            if (user.displayName) localStorage.setItem('maziName', user.displayName);
+          } catch(e){}
+          console.log('Auth: user signed in', user.uid);
+        }
+
+        // try flush queue
         flushOrderQueue().catch(err => console.warn('Bagfr flush error', err));
+      } else {
+        console.log('Auth: user signed out');
+        // do not remove local maziUID here — keep it for offline flows
       }
     });
   } catch (e) {
@@ -371,8 +398,12 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
       if (giftConfig && giftConfig.type === 'gift') {
         order.isGift = true;
         order.gift = giftConfig;
+      } else {
+        order.isGift = false;
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      order.isGift = false;
+    }
 
     return order;
   }
@@ -396,8 +427,8 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
       // Guest: try anonymous sign-in
       try {
         await signInAnonymously(auth);
-        // small pause to ensure auth state settled
-        await new Promise(r => setTimeout(r, 200));
+        // small pause to ensure auth state settled; onAuthStateChanged will sync maziUID and flushQueue
+        await new Promise(r => setTimeout(r, 150));
       } catch (err) {
         console.error('Anonymous sign-in failed', err);
         alert('Tidak dapat melanjutkan sebagai tamu. Silakan sign in terlebih dahulu.');
@@ -414,8 +445,8 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
 
       const firestoreOrder = {
         userId: useUid || null,
-        userEmail: localStorage.getItem('maziEmail') || '',
-        userName: localStorage.getItem('maziName') || '',
+        userEmail: (user && user.email) ? user.email : (localStorage.getItem('maziEmail') || ''),
+        userName: (user && user.displayName) ? user.displayName : (localStorage.getItem('maziName') || ''),
         id: order.id,
         createdAt: serverTimestamp(),
         status: order.status,
@@ -452,12 +483,26 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
         alert("Peringatan: koneksi ke server bermasalah atau belum login. Pesanan disimpan sementara dan akan dikirim ke server saat koneksi pulih / setelah login.");
       }
 
+      // ====== PASTIKAN local order punya user metadata juga ======
+      try {
+        const currentUser = auth.currentUser;
+        const uidLocal = currentUser ? currentUser.uid : (localStorage.getItem('maziUID') || null);
+        const emailLocal = currentUser ? (currentUser.email || (localStorage.getItem('maziEmail') || "")) : (localStorage.getItem('maziEmail') || "");
+        const nameLocal = localStorage.getItem('maziName') || "";
+        if (uidLocal) order.userId = String(uidLocal);
+        if (emailLocal) order.userEmail = String(emailLocal).trim();
+        if (nameLocal) order.userName = String(nameLocal);
+      } catch (e) { /* ignore */ }
+
       // save to local orders & clear cart
-      const orders = loadOrders();
-      orders.unshift(order);
-      saveOrders(orders);
-      localStorage.removeItem('cart');
-      try { localStorage.removeItem('giftConfig_v1'); } catch(e) {}
+      try {
+        const orders = loadOrdersLocal();
+        orders.unshift(order);
+        saveOrdersLocal(orders);
+      } catch (e) { console.warn('save local orders failed', e); }
+
+      try { localStorage.removeItem('cart'); } catch(e){}
+      try { localStorage.removeItem('giftConfig_v1'); } catch(e){}
       if (typeof window.renderCart === 'function') window.renderCart();
 
       // WhatsApp + redirect
