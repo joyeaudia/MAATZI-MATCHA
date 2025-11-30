@@ -1,7 +1,7 @@
 // ordadm.js — admin view orders + notifikasi + history
 // PENTING: di HTML admin gunakan: <script type="module" src="./ordadm.js"></script>
 
-import { db } from "./firebase-config.js";
+import { db, auth } from "./firebase-config.js";
 import {
   collection,
   query,
@@ -10,6 +10,9 @@ import {
   updateDoc,
   doc
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+const ADMIN_EMAIL = "byverent@gmail.com";
 
 (function () {
   'use strict';
@@ -561,23 +564,44 @@ import {
     return card;
   }
 
-  // ===== INIT: FILTER BUTTON + RENDER =====
-  document.addEventListener('DOMContentLoaded', function () {
-    const btns = document.querySelectorAll('.admin-pill');
-    if (btns.length) {
-      btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const filter = btn.dataset.filter || 'all';
-          currentFilter = filter; // 'all' | 'gift' | 'history'
+  // ===== INIT + ADMIN PROTECTION =====
+  document.addEventListener("DOMContentLoaded", function () {
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // belum login -> tendang ke login
+        window.location.href = "singin.html?from=admin";
+        return;
+      }
 
-          btns.forEach(b => b.classList.remove('is-active'));
-          btn.classList.add('is-active');
+      const email = (user.email || "").toLowerCase();
+      const isAdmin = email === ADMIN_EMAIL.toLowerCase();
 
-          renderAdminList();
+      if (!isAdmin) {
+        // bukan admin -> tendang ke home
+        window.location.href = "index.html";
+        return;
+      }
+
+      // === ADMIN LOLOS ===
+      console.log("Admin verified");
+
+      const btns = document.querySelectorAll('.admin-pill');
+      if (btns.length) {
+        btns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const filter = btn.dataset.filter || 'all';
+            currentFilter = filter; // 'all' | 'gift' | 'history'
+
+            btns.forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+
+            renderAdminList();
+          });
         });
-      });
-    }
+      }
 
-    renderAdminList();
+      renderAdminList();
+    });
   });
+
 })();

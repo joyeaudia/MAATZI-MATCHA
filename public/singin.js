@@ -1,5 +1,6 @@
-// singin.js (versi Firebase)
+// singin.js (versi Firebase Email/Password)
 
+// Import Firebase
 import { auth, db } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword,
@@ -8,6 +9,9 @@ import {
   doc,
   getDoc,
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+// ✨ Email admin utama (HARUS sama dengan yang di ordadm.js & signup.js)
+const ADMIN_EMAIL = "byverent@gmail.com";
 
 // 🔹 Toggle show/hide password
 document.querySelectorAll(".toggle").forEach((icon) => {
@@ -48,67 +52,57 @@ if (signInBtn) {
         data = snap.data();
       }
 
-      // 🎭 Tentukan role
-      const ADMIN_EMAIL = "byverent@gmail.com";
-      const role =
-        data.role ||
-        (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "admin" : "user");
+      // 🎭 Tentukan role:
+      // - Kalau Firestore punya field role -> pakai itu
+      // - Kalau tidak ada, tapi email == ADMIN_EMAIL -> admin
+      // - Selain itu -> user
+      let role = "user";
+      if (data.role) {
+        role = data.role;
+      } else if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        role = "admin";
+      }
 
       const name = data.name || user.displayName || "";
       const phone = data.phone || "";
 
+      // 🪪 Simpan session di localStorage
+      localStorage.setItem("maziRole", role);
+      localStorage.setItem("maziEmail", email);
+      localStorage.setItem("maziName", name);
+      localStorage.setItem("maziPhone", phone);
+      localStorage.setItem("maziUID", user.uid); // penting buat orders per-user
 
+      // 🔁 Coba flush antrean order kalau ada (non-blocking)
+      try {
+        if (typeof window.flushOrderQueue === "function") {
+          window.flushOrderQueue().catch((e) =>
+            console.warn("flush after sign-in failed", e)
+          );
+        }
+      } catch (e) {
+        console.warn("flushOrderQueue throw", e);
+      }
 
+      // 🔁 Kalau sign-in dari bag/checkout, kembalikan ke sana
+      const sp = new URLSearchParams(window.location.search);
+      const from = sp.get("from");
+      if (from === "bag" || from === "checkout") {
+        try {
+          const draft = JSON.parse(
+            localStorage.getItem("checkoutDraft_cart") || "null"
+          );
+          if (draft) {
+            localStorage.setItem("cart", JSON.stringify(draft));
+            localStorage.removeItem("checkoutDraft_cart");
+          }
+        } catch (e) {
+          console.warn("failed restore draft", e);
+        }
 
-
-// 🪪 Simpan session di localStorage
-localStorage.setItem("maziRole", role);
-localStorage.setItem("maziEmail", email);
-localStorage.setItem("maziName", name);
-localStorage.setItem("maziPhone", phone);
-
-// simpan UID agar order disimpan per-user (sekali)
-localStorage.setItem("maziUID", user.uid);
-
-// Coba flush queue jika available (non-blocking so redirect not delayed)
-if (typeof window.flushOrderQueue === 'function') {
-  window.flushOrderQueue().catch(e => console.warn('flush after sign-in failed', e));
-}
-
-// Jika sign-in terjadi karena checkout flow, restore cart dan kembalikan user
-const sp = new URLSearchParams(window.location.search);
-const from = sp.get('from');
-if (from === 'bag' || from === 'checkout') {
-  try {
-    const draft = JSON.parse(localStorage.getItem('checkoutDraft_cart') || 'null');
-    if (draft) {
-      localStorage.setItem('cart', JSON.stringify(draft));
-      localStorage.removeItem('checkoutDraft_cart');
-    }
-  } catch (e) { console.warn('failed restore draft', e); }
-
-  // redirect langsung kembali ke halaman asal
-  window.location.href = from === 'bag' ? 'bagfr.html' : 'cekout.html';
-  return;
-}
-
-
-// ⭐️ PASTE KODE INI TEPAAT SETELAH BLOK DI ATAS ⭐️
-
-// simpan UID ke localStorage (WAJIB untuk Firestore rules)
-localStorage.setItem("maziUID", user.uid);
-
-// coba flush queue bila ada order yang gagal kirim
-try {
-  if (typeof window.flushOrderQueue === "function") {
-    await window.flushOrderQueue();
-    console.log("flushOrderQueue completed after sign-in");
-  } else {
-    console.log("flushOrderQueue not loaded on this page");
-  }
-} catch (e) {
-  console.warn("flushOrderQueue error after sign-in", e);
-}
+        window.location.href = from === "bag" ? "bagfr.html" : "cekout.html";
+        return;
+      }
 
       // 👤 Siapkan profile untuk prl.html
       const parts = (name || "").split(/\s+/);
@@ -123,7 +117,10 @@ try {
         profile = null;
       }
 
-      if (!profile || (profile.email || "").toLowerCase() !== email.toLowerCase()) {
+      if (
+        !profile ||
+        (profile.email || "").toLowerCase() !== email.toLowerCase()
+      ) {
         profile = {
           firstName,
           lastName,
@@ -144,12 +141,13 @@ try {
 
       // 🚀 Redirect sesuai role
       if (role === "admin") {
-        window.location.href = "frsadm.html"; // halaman admin kamu
+        // HANYA admin (email ADMIN_EMAIL / role=admin) yang bisa sampai sini
+        window.location.href = "frsadm.html"; // halaman admin
       } else {
         window.location.href = "Home.html"; // halaman utama user
       }
     } catch (err) {
-      console.error(err);
+      console.error("LOGIN ERROR:", err.code, err.message);
       let msg = "Gagal login. Cek lagi email dan password ya 🙂";
 
       if (err.code === "auth/user-not-found") {
