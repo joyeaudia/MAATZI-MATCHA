@@ -1,4 +1,5 @@
 // ordadm.js — admin view orders + notifikasi + history
+<<<<<<< HEAD
 // PENTING: di HTML admin gunakan: <script type="module" src="./ordadm.js"></script>
 
 import { db, auth } from "./firebase-config.js";
@@ -14,6 +15,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 
 const ADMIN_EMAIL = "byverent@gmail.com";
 
+=======
+>>>>>>> parent of 3cbb1ed (18)
 (function () {
   'use strict';
 
@@ -104,45 +107,6 @@ const ADMIN_EMAIL = "byverent@gmail.com";
     }
   }
 
-  // ====== FIRESTORE SYNC (UPDATE STATUS & PAYMENT) ======
-  async function syncOrderStatusToFirestore(order) {
-    try {
-      if (!order || !order.id) return;
-
-      let docId = order.firestoreId || null;
-
-      // kalau belum punya firestoreId, cari berdasarkan field "id"
-      if (!docId) {
-        const coll = collection(db, "orders");
-        const q = query(coll, where("id", "==", order.id));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          console.warn("Tidak menemukan dokumen Firestore untuk order", order.id);
-          return;
-        }
-        const firstDoc = snap.docs[0];
-        docId = firstDoc.id;
-        // simpan supaya panggilan berikutnya tidak perlu query lagi
-        order.firestoreId = docId;
-      }
-
-      const ref = doc(db, "orders", docId);
-      const payload = {};
-
-      if (typeof order.status !== 'undefined') {
-        payload.status = order.status;
-      }
-      if (typeof order.paymentStatus !== 'undefined') {
-        payload.paymentStatus = order.paymentStatus;
-      }
-
-      await updateDoc(ref, payload);
-      console.log('Order updated in Firestore:', order.id, payload);
-    } catch (err) {
-      console.error('Gagal sync order ke Firestore:', err);
-    }
-  }
-
   // ===== LIST DI HALAMAN ADMIN =====
   function renderAdminList() {
     const container = document.getElementById('order-list');
@@ -197,6 +161,8 @@ const ADMIN_EMAIL = "byverent@gmail.com";
     const paymentStatus = (order.paymentStatus || 'pending').toLowerCase();
 
     // coloring:
+    // completed (history) -> warna lain
+    // else kalau paid -> hijau
     if (status === 'completed') {
       card.classList.add('is-completed');
     } else if (paymentStatus === 'paid') {
@@ -274,6 +240,7 @@ const ADMIN_EMAIL = "byverent@gmail.com";
     }
 
     // ===== GIFT INFO DETAIL (di dalam detail area) =====
+    // tidak ada "Recipient:" di sini, biar tidak dobel
     let giftInfoHtml = '';
 
     if (isGift) {
@@ -313,7 +280,7 @@ const ADMIN_EMAIL = "byverent@gmail.com";
       `;
     }
 
-    // ===== ITEMS DETAIL UNTUK ADMIN =====
+    // ===== ITEMS DETAIL UNTUK ADMIN (title + addons + qty × harga) =====
     let itemsHtml = '';
 
     (order.items || []).forEach(it => {
@@ -446,19 +413,22 @@ const ADMIN_EMAIL = "byverent@gmail.com";
 
     // ===== ATUR VISIBILITAS TOMBOL SESUAI STATUS & PAYMENT =====
     if (isFinal) {
+      // completed / cancelled -> tidak ada action
       if (approveBtn) approveBtn.style.display = 'none';
       if (rejectBtn) rejectBtn.style.display = 'none';
       if (deliveredBtn) deliveredBtn.style.display = 'none';
     } else if (paymentStatus === 'paid') {
+      // SUDAH DIBAYAR -> hanya boleh mark as delivered
       if (approveBtn) approveBtn.style.display = 'none';
       if (rejectBtn) rejectBtn.style.display = 'none';
     } else {
+      // BELUM dibayar -> hanya ACC / Tolak
       if (deliveredBtn) deliveredBtn.style.display = 'none';
     }
 
     // ===== EVENT BUTTON ACC =====
     if (approveBtn) {
-      approveBtn.addEventListener('click', async function (e) {
+      approveBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         const id = this.dataset.id;
         const all = loadOrders();
@@ -471,14 +441,6 @@ const ADMIN_EMAIL = "byverent@gmail.com";
 
           saveOrders(all);
           renderAdminList();
-
-          // SYNC KE FIRESTORE
-          try {
-            await syncOrderStatusToFirestore(all[idx]);
-          } catch (err) {
-            console.error('Error sync saat ACC:', err);
-          }
-
           alert('Order di-set sebagai SUDAH DIBAYAR.');
         }
       });
@@ -486,7 +448,7 @@ const ADMIN_EMAIL = "byverent@gmail.com";
 
     // ===== EVENT BUTTON REJECT =====
     if (rejectBtn) {
-      rejectBtn.addEventListener('click', async function (e) {
+      rejectBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         const id = this.dataset.id;
         const all = loadOrders();
@@ -499,14 +461,6 @@ const ADMIN_EMAIL = "byverent@gmail.com";
 
           saveOrders(all);
           renderAdminList();
-
-          // SYNC KE FIRESTORE
-          try {
-            await syncOrderStatusToFirestore(all[idx]);
-          } catch (err) {
-            console.error('Error sync saat REJECT:', err);
-          }
-
           alert('Order telah DITOLAK / dibatalkan oleh admin.');
         }
       });
@@ -514,12 +468,13 @@ const ADMIN_EMAIL = "byverent@gmail.com";
 
     // ===== EVENT BUTTON DELIVERED =====
     if (deliveredBtn) {
-      deliveredBtn.addEventListener('click', async function (e) {
+      deliveredBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         const id = this.dataset.id;
         const all = loadOrders();
         const idx = all.findIndex(o => String(o.id) === String(id));
         if (idx !== -1) {
+          // safety: hanya boleh completed kalau sudah paid
           if (
             String(all[idx].paymentStatus || '').toLowerCase() !== 'paid'
           ) {
@@ -532,14 +487,6 @@ const ADMIN_EMAIL = "byverent@gmail.com";
           all[idx].status = 'completed'; // <-- status untuk History
           saveOrders(all);
           renderAdminList();
-
-          // SYNC KE FIRESTORE
-          try {
-            await syncOrderStatusToFirestore(all[idx]);
-          } catch (err) {
-            console.error('Error sync saat DELIVERED:', err);
-          }
-
           alert('Order ditandai sebagai DELIVERED dan pindah ke History.');
         }
       });
@@ -564,6 +511,7 @@ const ADMIN_EMAIL = "byverent@gmail.com";
     return card;
   }
 
+<<<<<<< HEAD
   // ===== INIT + ADMIN PROTECTION =====
   document.addEventListener("DOMContentLoaded", function () {
     onAuthStateChanged(auth, (user) => {
@@ -572,6 +520,17 @@ const ADMIN_EMAIL = "byverent@gmail.com";
         window.location.href = "singin.html?from=admin";
         return;
       }
+=======
+  // ===== INIT: FILTER BUTTON + RENDER =====
+  document.addEventListener('DOMContentLoaded', function () {
+    // pakai pill baru di header
+    const btns = document.querySelectorAll('.admin-pill');
+    if (btns.length) {
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const filter = btn.dataset.filter || 'all';
+          currentFilter = filter; // 'all' | 'gift' | 'history'
+>>>>>>> parent of 3cbb1ed (18)
 
       const email = (user.email || "").toLowerCase();
       const isAdmin = email === ADMIN_EMAIL.toLowerCase();

@@ -1,102 +1,77 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Animasi Logo Kelap-Kelip</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: white;
-            overflow: hidden;
-        }
+<html>
+  <head>
+    <meta name="robots" content="noindex">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to Firebase Hosting</title>
 
-        .logo-container {
-            position: relative;
-            width: 220px;
-            height: 220px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/12.6.0/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/12.6.0/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
-        .logo-container img {
-            max-width: 100%;
-            max-height: 100%;
-            position: absolute;
-            opacity: 0;
-            transform: scale(0.5);
-            transition: opacity 0.8s ease-in-out, transform 1.2s ease-in-out;
-        }
-
-        /* Cahaya kelap-kelip putih */
-        .logo-container::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 170%;
-            height: 170%;
-            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
-            transform: translate(-50%, -50%) scale(0);
-            border-radius: 50%;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .5s ease-out, transform .8s ease-out;
-        }
-
-        .logo-container.shining::before {
-            animation: shinePulse .4s infinite alternate;
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        @keyframes shinePulse {
-            from { opacity: .4; transform: translate(-50%, -50%) scale(.9); }
-            to   { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
+    <style media="screen">
+      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
+      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
+      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
+      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
+      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+      @media (max-width: 600px) {
+        body, #message { margin-top: 0; background: white; box-shadow: none; }
+        body { border-top: 16px solid #ffa100; }
+      }
     </style>
-</head>
-<body>
-
-    <div class="logo-container" id="logoContainer">
-        <img id="lg3" src="logos/lg3.png" alt="Logo Efek">
-        <img id="lgut" src="logos/lgut.png" alt="Logo Akhir">
+  </head>
+  <body>
+    <div id="message">
+      <h2>Welcome</h2>
+      <h1>Firebase Hosting Setup Complete</h1>
+      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
+      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
     </div>
+    <p id="load">Firebase SDK Loading&hellip;</p>
 
-<script>
-    const container = document.getElementById('logoContainer');
-    const lg3 = document.getElementById("lg3");
-    const lgut = document.getElementById("lgut");
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
 
-    function showLG3() {
-        container.classList.add("shining"); 
-        lg3.style.opacity = "1";
-        lg3.style.transform = "scale(2.0)";
-
-        setTimeout(() => {
-            container.classList.remove("shining");
-            showFinalLogo();
-        }, 2500); // durasi tampil + mengkilat lg3
-    }
-
-    function showFinalLogo() {
-        lg3.style.opacity = "0";
-        lgut.style.opacity = "1";
-        lgut.style.transform = "scale(1.0)";
-
-        setTimeout(() => {
-            window.location.href = "singup.html"; 
-        }, 3000);
-    }
-
-    window.onload = showLG3;
-</script>
-
-</body>
+        
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'database', 
+            'firestore',
+            'functions',
+            'messaging', 
+            'storage', 
+            'analytics', 
+            'remoteConfig',
+            'performance',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+    </script>
+  </body>
 </html>
