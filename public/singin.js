@@ -57,11 +57,41 @@ if (signInBtn) {
       const name = data.name || user.displayName || "";
       const phone = data.phone || "";
 
+
+
+
+
 // 🪪 Simpan session di localStorage
 localStorage.setItem("maziRole", role);
 localStorage.setItem("maziEmail", email);
 localStorage.setItem("maziName", name);
 localStorage.setItem("maziPhone", phone);
+
+// simpan UID agar order disimpan per-user (sekali)
+localStorage.setItem("maziUID", user.uid);
+
+// Coba flush queue jika available (non-blocking so redirect not delayed)
+if (typeof window.flushOrderQueue === 'function') {
+  window.flushOrderQueue().catch(e => console.warn('flush after sign-in failed', e));
+}
+
+// Jika sign-in terjadi karena checkout flow, restore cart dan kembalikan user
+const sp = new URLSearchParams(window.location.search);
+const from = sp.get('from');
+if (from === 'bag' || from === 'checkout') {
+  try {
+    const draft = JSON.parse(localStorage.getItem('checkoutDraft_cart') || 'null');
+    if (draft) {
+      localStorage.setItem('cart', JSON.stringify(draft));
+      localStorage.removeItem('checkoutDraft_cart');
+    }
+  } catch (e) { console.warn('failed restore draft', e); }
+
+  // redirect langsung kembali ke halaman asal
+  window.location.href = from === 'bag' ? 'bagfr.html' : 'cekout.html';
+  return;
+}
+
 
 // ⭐️ PASTE KODE INI TEPAAT SETELAH BLOK DI ATAS ⭐️
 

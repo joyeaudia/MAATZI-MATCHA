@@ -1,5 +1,5 @@
-// singup.js – versi tahan banting 😎
-
+// singup.js – versi tahan banting (diperbaiki)
+// Pastikan <script type="module" src="singup.js"></script> di HTML
 import { auth, db } from "./firebase-config.js";
 import {
   createUserWithEmailAndPassword,
@@ -46,7 +46,7 @@ function setupCustomAlert() {
 const showAlert = setupCustomAlert();
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 👀 Cari elemen pakai beberapa kemungkinan id/class
+  // element lookup (robust)
   const nameEl =
     document.querySelector("#fullname, #name, #nama") || document.querySelector("input[name='fullname'], input[name='name']");
   const emailEl =
@@ -73,13 +73,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   if (!submitBtn) {
-    console.error(
-      "Tombol signup tidak ditemukan. Coba kasih id='createAccountBtn' atau class='create-btn' di HTML."
-    );
+    console.error("Tombol signup tidak ditemukan. Tambah id/create-btn di HTML.");
     return;
   }
 
-  // ====== Toggle show/hide password (kalau ada icon .toggle) ======
+  // toggle pw visibility
   document.querySelectorAll(".toggle").forEach((icon) => {
     icon.addEventListener("click", () => {
       const input = icon.previousElementSibling;
@@ -100,7 +98,13 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  submitBtn.addEventListener("click", async () => {
+  submitBtn.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+
+    // prevent double submit
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+
     const name = (nameEl?.value || "").trim();
     const email = (emailEl?.value || "").trim();
     const phone = (phoneEl?.value || "").trim();
@@ -109,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!name || !email || !phone || !pass || !confirm) {
       showAlert("Semua kolom wajib diisi ya 🙂");
+      submitBtn.disabled = false;
       return;
     }
 
@@ -116,50 +121,50 @@ document.addEventListener("DOMContentLoaded", () => {
       showAlert(
         "Password harus minimal 8 karakter, ada huruf besar, huruf kecil, angka, dan simbol."
       );
+      submitBtn.disabled = false;
       return;
     }
 
     if (pass !== confirm) {
       showAlert("Password dan konfirmasinya tidak sama.");
+      submitBtn.disabled = false;
       return;
     }
 
     try {
+      // create account
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       const user = cred.user;
 
-      await updateProfile(user, { displayName: name });
+      // set display name in Firebase Auth
+      try {
+        await updateProfile(user, { displayName: name });
+      } catch (e) {
+        console.warn("updateProfile warning:", e);
+      }
 
+      // determine role
       const ADMIN_EMAIL = "byverent@gmail.com";
-      const role =
-        email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "admin" : "user";
+      const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "admin" : "user";
 
-      await setDoc(doc(db, "users", user.uid), {
-        name,
-        email,
-        phone,
-        role,
-        memberSince: new Date().getFullYear(),
-        createdAt: serverTimestamp(),
-      });
+      // --- WRITE USER DOC TO FIRESTORE (IMPORTANT) ---
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          name,
+          email,
+          phone,
+          role,
+          memberSince: new Date().getFullYear(),
+          createdAt: serverTimestamp(),
+        });
+        console.log("User doc written to Firestore for uid:", user.uid);
+      } catch (err) {
+        console.warn("Warning: failed to write user doc to Firestore", err);
+        // we continue anyway (still save local session) but log for debug
+      }
 
-      // --- after setDoc(...)
-localStorage.setItem("maziUID", user.uid);
-
-// try flush queued orders (if flushOrderQueue defined globally)
-try {
-  if (typeof window.flushOrderQueue === 'function') {
-    // await so queue has chance to flush before redirect/onboarding
-    await window.flushOrderQueue();
-    console.log('flushOrderQueue completed after signup');
-  } else {
-    console.log('flushOrderQueue not present on this page');
-  }
-} catch (e) {
-  console.warn('flushOrderQueue failed after signup', e);
-}
-
-
+      // --- save session & profile locally (do this BEFORE redirect)
+      localStorage.setItem("maziUID", user.uid);
       localStorage.setItem("maziRole", role);
       localStorage.setItem("maziEmail", email);
       localStorage.setItem("maziName", name);
@@ -168,7 +173,6 @@ try {
       const parts = name.split(/\s+/);
       const firstName = parts[0] || "";
       const lastName = parts.slice(1).join(" ");
-
       const profile = {
         firstName,
         lastName,
@@ -176,12 +180,37 @@ try {
         phone,
         memberSince: new Date().getFullYear(),
       };
-
       localStorage.setItem("profile", JSON.stringify(profile));
 
+      // attempt to flush queued orders (non-blocking)
+      if (typeof window.flushOrderQueue === 'function') {
+        window.flushOrderQueue()
+          .then(()=>console.log('flushOrderQueue completed after signup'))
+          .catch(e=>console.warn('flush after signup failed', e));
+      } else {
+        console.log('flushOrderQueue not present on this page');
+      }
+
+      // handle redirect back to bag/checkout if signup came from there
+      const sp = new URLSearchParams(window.location.search);
+      const from = sp.get('from'); // e.g. ?from=checkout or ?from=bag
+      if (from === 'bag' || from === 'checkout') {
+        try {
+          const draft = JSON.parse(localStorage.getItem('checkoutDraft_cart') || 'null');
+          if (draft) {
+            localStorage.setItem('cart', JSON.stringify(draft));
+            localStorage.removeItem('checkoutDraft_cart');
+          }
+        } catch (e) { console.warn('restore draft failed', e); }
+
+        // redirect back so user can continue checkout
+        window.location.href = from === 'bag' ? 'bagfr.html' : 'cekout.html';
+        return;
+      }
+
+      // normal onboarding flow: show success then go to alamat.html
       showAlert("Akun berhasil dibuat! 🎉");
 
-      // habis klik OK pindah ke alamat.html
       const modal = document.getElementById("alertModal");
       const closeBtn = document.getElementById("alertClose");
       if (closeBtn && modal) {
@@ -207,6 +236,8 @@ try {
       }
 
       showAlert(msg);
+    } finally {
+      submitBtn.disabled = false;
     }
   });
 });
